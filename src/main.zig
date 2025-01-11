@@ -6,6 +6,12 @@ const constants = @import("constants.zig");
 
 const State = @import("state.zig");
 
+// zig fmt: off
+const game_states = struct {
+    pub const Game      = @import("states/game.zig");
+    pub const PauseMenu = @import("states/pause_menu.zig");
+}; // zig fmt: on
+
 var outer = std.heap.GeneralPurposeAllocator(.{}).init;
 var alloc = outer.allocator();
 
@@ -31,18 +37,24 @@ pub fn main() !void {
 
     while (state.running and !raylib.windowShouldClose()) {
         const highest_active_state = state.highestActiveState();
-        switch (highest_active_state) {
-            State.game_flags.pause_menu => try @import("states/pause_menu.zig").update(&state),
-            State.game_flags.game       => try @import("states/game.zig").update(&state),
-            else => unreachable,
-        }
+
+        // zig fmt: off
+        try switch (highest_active_state) {
+            State.game_flags.game       => game_states.Game.update(&state),
+            State.game_flags.pause_menu => game_states.PauseMenu.update(&state),
+            else => error.InvalidGameState,
+        }; // zig fmt: on
+
         raylib.beginDrawing();
+        defer raylib.endDrawing();
         raylib.clearBackground(raylib.Color.black);
-        switch (highest_active_state) {
-            State.game_flags.pause_menu => try @import("states/pause_menu.zig").render(&state),
-            State.game_flags.game       => try @import("states/game.zig").render(&state),
-            else => unreachable,
-        }
-        raylib.endDrawing();
+
+        // zig fmt: off
+        try switch (highest_active_state) {
+            State.game_flags.game       => game_states.Game.render(&state),
+            State.game_flags.pause_menu => game_states.PauseMenu.render(&state),
+            else => error.InvalidGameState,
+        }; // zig fmt: on
+
     }
 }
