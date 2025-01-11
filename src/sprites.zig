@@ -46,7 +46,6 @@ pub fn init(this: *Sprites) !void {
 /// loads all the sprites in place, emscripten specific
 fn init_emscripten(this: *Sprites) !void {
     var buffer: [128]u8 = undefined;
-    _ = &buffer; // autofix
 
     const res_list = @embedFile("res.txt");
     const entry_count = comptime std.mem.count(u8, res_list, "\n");
