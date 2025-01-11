@@ -42,7 +42,7 @@ pub fn main() !void {
         try switch (highest_active_state) {
             State.game_flags.game       => game_states.Game.update(&state),
             State.game_flags.pause_menu => game_states.PauseMenu.update(&state),
-            else => error.InvalidGameState,
+            else => unreachable,
         }; // zig fmt: on
 
         raylib.beginDrawing();
@@ -53,7 +53,7 @@ pub fn main() !void {
         try switch (highest_active_state) {
             State.game_flags.game       => game_states.Game.render(&state),
             State.game_flags.pause_menu => game_states.PauseMenu.render(&state),
-            else => error.InvalidGameState,
+            else => unreachable,
         }; // zig fmt: on
 
     }
