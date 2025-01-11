@@ -24,14 +24,9 @@ pub fn main() !void {
     raylib.setTargetFPS(60);
 
     while (!raylib.windowShouldClose()) {
-        try handle(&state);
         try update(&state);
         try render(&state);
     }
-}
-
-fn handle(state: *State) !void {
-    _ = state;
 }
 
 fn update(state: *State) !void {
