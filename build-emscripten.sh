@@ -5,8 +5,8 @@
 # `emsdk install latest` (or whatever version you need, 3.1.50 worked for me:tm:)
 # `/usr/lib/emsdk/upstream/emscripten/emcc --generate-config`
 
-# Used to finding assets in res/
-ls -NAU1 --color=never res >| src/res.txt
+# Used to find assets in res/
+ls -p res | grep -v / >| src/res.txt
 
 # This will output the project to zig-out/htmlout
 zig build -Dtarget=wasm32-emscripten --sysroot /usr/lib/emsdk/upstream/emscripten $@
