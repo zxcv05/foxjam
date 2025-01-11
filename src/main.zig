@@ -27,25 +27,22 @@ pub fn main() !void {
     defer state.sprites.deinit();
 
     raylib.setTargetFPS(60);
+    raylib.setExitKey(.null);
 
-    while (!raylib.windowShouldClose()) {
-        try update(&state);
-        try render(&state);
+    while (state.running and !raylib.windowShouldClose()) {
+        const highest_active_state = state.highestActiveState();
+        switch (highest_active_state) {
+            State.game_flags.pause_menu => try @import("states/pause_menu.zig").update(&state),
+            State.game_flags.game       => try @import("states/game.zig").update(&state),
+            else => unreachable,
+        }
+        raylib.beginDrawing();
+        raylib.clearBackground(raylib.Color.black);
+        switch (highest_active_state) {
+            State.game_flags.pause_menu => try @import("states/pause_menu.zig").render(&state),
+            State.game_flags.game       => try @import("states/game.zig").render(&state),
+            else => unreachable,
+        }
+        raylib.endDrawing();
     }
-}
-
-fn update(state: *State) !void {
-    if (raylib.isMouseButtonPressed(.left)) {
-        raylib.playSound(state.audios.click8a);
-    }
-}
-
-fn render(state: *State) !void {
-    raylib.beginDrawing();
-    defer raylib.endDrawing();
-
-    raylib.clearBackground(raylib.Color.black);
-    raylib.drawText("yippie", 0, 0, 32, raylib.Color.white);
-
-    raylib.drawTexture(state.sprites.zxcv_pfp, 64, 64, raylib.Color.white);
 }
