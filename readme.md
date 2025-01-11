@@ -2,7 +2,7 @@
 Submission for Mini Jam 176: Foxes
 
 ## Building
-- Built with zig 0.14.0-dev.2597+252c20310
+- Built with zig 0.14.0-dev.2634+b36ea592b
 - `zig build --fetch`
 - `zig build run`
 
