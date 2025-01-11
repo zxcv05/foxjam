@@ -1,0 +1,17 @@
+.{
+    .name = "foxjam",
+    .version = "0.0.0",
+    .minimum_zig_version = "0.14.0",
+
+    .dependencies = .{
+        .raylib = .{
+            .url = "git+https://github.com/zxcv05/raylib-zig#c49f747f6f6effc9060c74c86259ec2df8e979d3",
+            .hash = "12204432204b62a97494ba6b104eac102a3aa3a607e5ac41b055f2e568b310f34cb0",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
