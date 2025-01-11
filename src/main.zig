@@ -17,7 +17,12 @@ pub fn main() !void {
     raylib.initWindow(constants.SIZE_WIDTH, constants.SIZE_HEIGHT, "minijam - fox theme");
     defer raylib.closeWindow();
 
-    // Texture loading code has to be after initWindow, will segfault if not
+    raylib.initAudioDevice();
+    defer raylib.closeAudioDevice();
+
+    try state.audios.init();
+    defer state.audios.deinit();
+
     try state.sprites.init();
     defer state.sprites.deinit();
 
@@ -30,7 +35,9 @@ pub fn main() !void {
 }
 
 fn update(state: *State) !void {
-    _ = state;
+    if (raylib.isMouseButtonPressed(.left)) {
+        raylib.playSound(state.audios.click8a);
+    }
 }
 
 fn render(state: *State) !void {
