@@ -9,7 +9,7 @@ const Audios = @This();
 
 click8a: raylib.Sound = undefined,
 
-/// loads all the sprites in place
+/// loads all the audios in place
 pub fn init(this: *Audios) !void {
     if (constants.is_web) return try this.init_emscripten();
 
@@ -38,7 +38,7 @@ pub fn init(this: *Audios) !void {
     }
 }
 
-/// loads all the sprites in place, emscripten specific
+/// loads all the audios in place, emscripten specific
 fn init_emscripten(this: *Audios) !void {
     var buffer: [128]u8 = undefined;
 
@@ -81,7 +81,7 @@ fn init_emscripten(this: *Audios) !void {
     }
 }
 
-/// unloads all the sprites
+/// unloads all the audios
 pub fn deinit(this: Audios) void {
     const fields = @typeInfo(Audios).@"struct".fields;
 
