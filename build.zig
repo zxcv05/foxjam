@@ -46,6 +46,17 @@ pub fn build(b: *std.Build) !void {
 
     const test_step = b.step("test", "Test program");
     test_step.dependOn(&test_run.step);
+
+    // Dist
+
+    const dist_step = b.step("dist", "Create dist/");
+    const dist_dir: std.Build.InstallDir = .{ .custom = "dist" };
+
+    const copy_res = b.addInstallDirectory(.{ .source_dir = .{ .cwd_relative = "res/" }, .install_dir = dist_dir, .install_subdir = "res" });
+    const copy_exe = b.addInstallArtifact(exe, .{ .dest_dir = .{ .override = dist_dir }, .dest_sub_path = "foxjam" });
+
+    dist_step.dependOn(&copy_res.step);
+    dist_step.dependOn(&copy_exe.step);
 }
 
 pub fn build_emscripten(
