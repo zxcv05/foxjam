@@ -4,10 +4,10 @@ const raygui = @import("raylib");
 
 const constants = @import("constants.zig");
 
-const State = @import("state.zig");
+const Context = @import("Context.zig");
 
 // zig fmt: off
-const game_states = struct {
+const states = struct {
     pub const Game      = @import("states/game.zig");
     pub const PauseMenu = @import("states/pause_menu.zig");
 }; // zig fmt: on
@@ -18,7 +18,7 @@ var alloc = outer.allocator();
 pub fn main() !void {
     defer _ = outer.deinit();
 
-    var state: State = .{};
+    var ctx: Context = .{};
 
     raylib.initWindow(constants.SIZE_WIDTH, constants.SIZE_HEIGHT, "minijam - fox theme");
     defer raylib.closeWindow();
@@ -26,35 +26,21 @@ pub fn main() !void {
     raylib.initAudioDevice();
     defer raylib.closeAudioDevice();
 
-    try state.audios.init();
-    defer state.audios.deinit();
-
-    try state.sprites.init();
-    defer state.sprites.deinit();
+    try ctx.assets.init();
+    defer ctx.assets.deinit();
 
     raylib.setTargetFPS(60);
     raylib.setExitKey(.null);
 
-    while (state.running and !raylib.windowShouldClose()) {
-        const highest_active_state = state.highestActiveState();
+    try ctx.driver.enter(&ctx);
 
-        // zig fmt: off
-        try switch (highest_active_state) {
-            State.game_flags.game       => game_states.Game.update(&state),
-            State.game_flags.pause_menu => game_states.PauseMenu.update(&state),
-            else => unreachable,
-        }; // zig fmt: on
+    while (ctx.running and !raylib.windowShouldClose()) {
+        try ctx.driver.update(&ctx);
 
         raylib.beginDrawing();
         defer raylib.endDrawing();
         raylib.clearBackground(raylib.Color.black);
 
-        // zig fmt: off
-        try switch (highest_active_state) {
-            State.game_flags.game       => game_states.Game.render(&state),
-            State.game_flags.pause_menu => game_states.PauseMenu.render(&state),
-            else => unreachable,
-        }; // zig fmt: on
-
+        try ctx.driver.render(&ctx);
     }
 }

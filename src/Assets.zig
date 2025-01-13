@@ -3,7 +3,7 @@ const raylib = @import("raylib");
 
 const constants = @import("constants.zig");
 
-const Sprites = @This();
+const Assets = @This();
 
 // zxcv_pfp is a stub to show how this workflow works
 // it matches "zxcv_pfp.png" and will be a 2d texture
@@ -13,9 +13,10 @@ const Sprites = @This();
 // does it save me having to update three or four lines for every sprite i wanna add? also yes
 
 zxcv_pfp: raylib.Texture2D = undefined,
+click8a: raylib.Sound = undefined,
 
-/// loads all the sprites in place
-pub fn init(this: *Sprites) !void {
+/// loads all the assets in place
+pub fn init(this: *Assets) !void {
     if (constants.is_web) return try this.init_emscripten();
 
     var buffer: [128]u8 = undefined;
@@ -23,7 +24,7 @@ pub fn init(this: *Sprites) !void {
     const res_dir = try std.fs.cwd().openDir("res", .{ .iterate = true });
     var res_files = res_dir.iterate();
 
-    const fields = @typeInfo(Sprites).@"struct".fields;
+    const fields = @typeInfo(Assets).@"struct".fields;
 
     inline for (fields) |field| {
         defer res_files.reset();
@@ -36,15 +37,12 @@ pub fn init(this: *Sprites) !void {
         } else return error.CouldntFindTextureFile;
 
         const file_path = try std.fmt.bufPrintZ(buffer[0..], "res/{s}", .{file_name});
-        const sprite = @FieldType(Sprites, field.name).init(file_path);
-
-        const field_ptr = &@field(this, field.name);
-        field_ptr.* = sprite;
+        this.load_asset(field.name, file_path);
     }
 }
 
-/// loads all the sprites in place, emscripten specific
-fn init_emscripten(this: *Sprites) !void {
+/// loads all the assets in place, emscripten specific
+fn init_emscripten(this: *Assets) !void {
     var buffer: [128]u8 = undefined;
 
     const res_list = @embedFile("res.txt");
@@ -54,23 +52,20 @@ fn init_emscripten(this: *Sprites) !void {
         var files: [entry_count][]const u8 = undefined;
         var files_index: comptime_int = 0;
 
-        var file_start: comptime_int = 0;
-        var index: comptime_int = 0;
-        while (index < res_list.len) : (index += 1) {
-            if (res_list[index] == '\n') {
-                defer files_index += 1;
-                defer file_start = index + 1;
+        var start: comptime_int = 0;
+        for (res_list[0..], 0..) |chr, index| {
+            if (chr != '\n') continue;
 
-                files[files_index] = res_list[file_start..index];
-            }
+            defer files_index += 1;
+            defer start = index + 1;
+            files[files_index] = res_list[start..index];
         }
 
         std.debug.assert(files_index == entry_count);
-
         break :split files;
     };
 
-    const fields = @typeInfo(Sprites).@"struct".fields;
+    const fields = @typeInfo(Assets).@"struct".fields;
 
     inline for (fields) |field| {
         const file_name = for (files) |file| {
@@ -79,16 +74,21 @@ fn init_emscripten(this: *Sprites) !void {
         } else return error.CouldntFindTextureFile;
 
         const file_path = try std.fmt.bufPrintZ(buffer[0..], "res/{s}", .{file_name});
-        const sprite = @FieldType(Sprites, field.name).init(file_path);
-
-        const field_ptr = &@field(this, field.name);
-        field_ptr.* = sprite;
+        this.load_asset(field.name, file_path);
     }
 }
 
-/// unloads all the sprites
-pub fn deinit(this: Sprites) void {
-    const fields = @typeInfo(Sprites).@"struct".fields;
+/// load a single asset in place
+fn load_asset(this: *Assets, comptime field: [:0]const u8, file_path: [:0]const u8) void {
+    const asset: @FieldType(Assets, field) = .init(file_path);
+
+    const field_ptr = &@field(this, field);
+    field_ptr.* = asset;
+}
+
+/// unloads all the assets
+pub fn deinit(this: Assets) void {
+    const fields = @typeInfo(Assets).@"struct".fields;
 
     inline for (fields) |field| {
         @field(this, field.name).unload();
