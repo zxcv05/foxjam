@@ -5,5 +5,4 @@ if something is finished, remove the it
 - a lil demo shop with some coins/sides
 - effects
   - coins with effects
-  - keeping track of effects
 - the gatchas

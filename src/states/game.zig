@@ -21,6 +21,7 @@ var last_coin: Coin = .{ .win = {} };
 /// may need to be increased if we get to over *a lot* money
 var money: u64 = 10_00;
 var bet_precentage: f128 = 0.5;
+var effects: EffectList = undefined;
 
 pub fn init(ctx: *Context) !void {
     coin_deck = try CoinDeck.init(
@@ -28,10 +29,16 @@ pub fn init(ctx: *Context) !void {
         @truncate(@abs(std.time.nanoTimestamp())),
         ctx.allocator
     );
-    errdefer coin_deck.deinit();
+    errdefer coin_deck.deinit(ctx.allocator);
+    effects = try EffectList.init(ctx.allocator);
+    errdefer effects.deinit(ctx.allocator);
+
+    try coin_deck.positive_deck.append(ctx.allocator, .{ .additive_win = 10_00 });
+    try coin_deck.negative_deck.append(ctx.allocator, .{ .next_multiplier = 2 });
 }
 
 pub fn deinit(ctx: *Context) void {
+    effects.deinit(ctx.allocator);
     coin_deck.deinit(ctx.allocator);
 }
 
@@ -69,28 +76,38 @@ pub fn update(ctx: *Context) !void {
         raylib.isKeyPressed(.space);
     if (should_flip) {
         const bet_amount: @TypeOf(money) = @intFromFloat(@ceil(@as(f128, @floatFromInt(money)) * bet_precentage));
-        money = money - bet_amount;
 
         last_coin = coin_deck.flip(0.5);
 
-        switch (last_coin) {
-            .win => money += bet_amount * 2,
-            .loss => {},
-            .additive_win => |val| money += bet_amount + val,
+        // zig fmt: off
+        switch (last_coin) { // TODO: add new effects that get applied once flipping
+            .win             => money += bet_amount * effects.multiplier,
+            .loss            => money -= bet_amount,
+            .additive_win    => |val| money += val * effects.multiplier,
+            .next_multiplier => try effects.addEffect(.{
+                .coin     = last_coin,
+                .duration = 2,
+            }, ctx.allocator),
         }
+        // zig fmt: on
+
+        effects.update();
     }
 }
 
 pub fn render(ctx: *Context) !void {
+    _ = ctx;
+
+    var text_buffer: [256]u8 = undefined;
     { // draw results of last coin flip
-        var coin_text_buffer = [_]u8{0} ** 256;
-        const coin_text: [:0]const u8 = switch (last_coin) {
-            .win => "heads",
-            .loss => "tails",
-            .additive_win => |val| blk: {
-                break :blk try std.fmt.bufPrintZ(&coin_text_buffer, "+ ${d}.{d:02}", .{val / 100, val % 100});
-            },
+        // zig fmt: off
+        const coin_text: [:0]const u8 = switch (last_coin) { // TODO: add new effects that get shown once flipping
+            .win             => "heads",
+            .loss            => "tails",
+            .additive_win    => |val| std.fmt.bufPrintZ(&text_buffer, "+ ${d}.{d:02}", .{val / 100, val % 100}) catch unreachable,
+            .next_multiplier => |val| std.fmt.bufPrintZ(&text_buffer, "next two x{d}", .{val}) catch unreachable,
         };
+        // zig fmt: on
         const coin_text_width = raylib.measureText(coin_text.ptr, 32);
         std.debug.assert(coin_text_width >= 0);
         raylib.drawText(
@@ -102,8 +119,7 @@ pub fn render(ctx: *Context) !void {
         );
     }
     { // draw current balance
-        const balance_text = try std.fmt.allocPrintZ(ctx.allocator, "${d}.{d:02}", .{money / 100, money % 100});
-        defer ctx.allocator.free(balance_text);
+        const balance_text = std.fmt.bufPrintZ(&text_buffer, "${d}.{d:02}", .{money / 100, money % 100}) catch unreachable;
         const balance_text_width = raylib.measureText(balance_text.ptr, 32);
         std.debug.assert(balance_text_width >= 0);
         raylib.drawText(
@@ -116,8 +132,7 @@ pub fn render(ctx: *Context) !void {
     }
     { // draw bet amount and slider
         const bet_amount: u64 = @intFromFloat(@ceil(@as(f128, @floatFromInt(money)) * bet_precentage));
-        const bet_amount_text = try std.fmt.allocPrintZ(ctx.allocator, "Betting: ${d}.{d:02}", .{bet_amount / 100, bet_amount % 100});
-        defer ctx.allocator.free(bet_amount_text);
+        const bet_amount_text = std.fmt.bufPrintZ(&text_buffer, "Betting: ${d}.{d:02}", .{bet_amount / 100, bet_amount % 100}) catch unreachable;
         const bet_amount_text_width = raylib.measureText(bet_amount_text.ptr, 32);
         std.debug.assert(bet_amount_text_width >= 0);
         raylib.drawText(
@@ -126,6 +141,19 @@ pub fn render(ctx: *Context) !void {
             82,
             32,
             raylib.Color.black
+        );
+    }
+    for (effects.effects.items, 0..) |effect, i| { // draw current effects
+        const effect_text = switch (effect.coin) { // TODO: update to include new effects
+            .next_multiplier => |val| std.fmt.bufPrintZ(&text_buffer, "{d}x multiplier", .{val}) catch unreachable,
+            else => unreachable,
+        };
+        raylib.drawText(
+            effect_text,
+            2,
+            @intCast(2 + i * 14),
+            2,
+            raylib.Color.white
         );
     }
 }
@@ -145,6 +173,9 @@ const Coin = union (enum) {
     /// returns 100% of bet amount + value
     /// unit: cent / $0.01
     additive_win: u64,
+    /// next 2 flips will get a multiplier of value
+    /// only if the result is positive tho, ofc
+    next_multiplier: u64,
 };
 
 /// the effect of a coin combined with a duration
@@ -159,6 +190,53 @@ const Effect = struct {
             .coin = effect.coin,
             .duration = effect.duration - 1,
         };
+    }
+};
+
+/// a list of effects
+/// also keeps track of the total effects for convenience
+const EffectList = struct {
+    /// DO NOT OVERWRITE
+    effects: std.ArrayListUnmanaged(Effect),
+    /// DO NOT OVERWRITE
+    multiplier: u64 = 1,
+
+    pub fn init(allocator: std.mem.Allocator) !EffectList {
+        var outp: EffectList = .{
+            .effects = undefined,
+        };
+        outp.effects = try std.ArrayListUnmanaged(Effect).initCapacity(allocator, 1);
+        errdefer outp.effects.deinit(allocator);
+        return outp;
+    }
+    pub fn deinit(self: *EffectList, allocator: std.mem.Allocator) void {
+        self.effects.deinit(allocator);
+    }
+
+    /// adds an effect and updates values
+    pub fn addEffect(self: *EffectList, effect: Effect, allocator: std.mem.Allocator) !void {
+        try self.effects.append(allocator, effect);
+        switch (effect.coin) { // TODO: update with new effects
+            .next_multiplier => |val| self.multiplier *= val,
+            else => {},
+        }
+    }
+    /// updates effect list
+    pub fn update(self: *EffectList) void {
+        var i: usize = 0;
+        while (i < self.effects.items.len) {
+            if (self.effects.items[i].update()) |updated_effect| {
+                self.effects.items[i] = updated_effect;
+                i += 1;
+            }
+            else {
+                switch (self.effects.items[i].coin) { // TODO: update with new effects
+                    .next_multiplier => |val| self.multiplier /= val,
+                    else => {},
+                }
+                _ = self.effects.orderedRemove(i);
+            }
+        }
     }
 };
 

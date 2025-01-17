@@ -7,4 +7,4 @@ pub const SIZE_HEIGHT = 450;
 pub const is_web = builtin.os.tag == .emscripten;
 
 /// coins per deck at start of game
-pub const initial_coins = 25;
+pub const initial_coins = 5;
