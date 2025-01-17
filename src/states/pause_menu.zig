@@ -5,11 +5,21 @@ const State = @import("State.zig");
 const Context = @import("../Context.zig");
 
 pub const interface = State{
+    .init = &init,
+    .deinit = &deinit,
     .enter = &enter,
     .leave = &leave,
     .update = &update,
     .render = &render,
 };
+
+pub fn init(allocator: std.mem.Allocator) !void {
+    _ = allocator;
+}
+
+pub fn deinit(allocator: std.mem.Allocator) void {
+    _ = allocator;
+}
 
 pub fn enter(ctx: *Context) !void {
     _ = ctx;

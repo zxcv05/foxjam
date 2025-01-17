@@ -5,12 +5,7 @@ const raygui = @import("raylib");
 const constants = @import("constants.zig");
 
 const Context = @import("Context.zig");
-
-// zig fmt: off
-const states = struct {
-    pub const Game      = @import("states/game.zig");
-    pub const PauseMenu = @import("states/pause_menu.zig");
-}; // zig fmt: on
+const states = @import("states/State.zig").states;
 
 var outer = std.heap.GeneralPurposeAllocator(.{}).init;
 var alloc = outer.allocator();
@@ -31,6 +26,9 @@ pub fn main() !void {
 
     raylib.setTargetFPS(60);
     raylib.setExitKey(.null);
+
+    for (states.all) |state| try state.init(alloc);
+    defer for (states.all) |state| state.deinit(alloc);
 
     try ctx.driver.enter(&ctx);
 
