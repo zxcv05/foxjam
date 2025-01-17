@@ -18,8 +18,8 @@ pub const states = struct {
     };
 };
 
-init: *const fn (std.mem.Allocator) anyerror!void,
-deinit: *const fn (std.mem.Allocator) void,
+init: *const fn (*Context) anyerror!void,
+deinit: *const fn (*Context) void,
 enter: *const fn (*Context) anyerror!void,
 leave: *const fn (*Context) anyerror!void,
 update: *const fn (*Context) anyerror!void,

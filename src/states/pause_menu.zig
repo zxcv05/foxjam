@@ -13,12 +13,12 @@ pub const interface = State{
     .render = &render,
 };
 
-pub fn init(allocator: std.mem.Allocator) !void {
-    _ = allocator;
+pub fn init(ctx: *Context) !void {
+    _ = ctx;
 }
 
-pub fn deinit(allocator: std.mem.Allocator) void {
-    _ = allocator;
+pub fn deinit(ctx: *Context) void {
+    _ = ctx;
 }
 
 pub fn enter(ctx: *Context) !void {

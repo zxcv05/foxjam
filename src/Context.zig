@@ -2,6 +2,8 @@
 //# Its prefered to have a default value for anything here but if not
 //# Just add it to its initialization in main.zig
 
+const std = @import("std");
+
 const Assets = @import("Assets.zig");
 const State = @import("states/State.zig");
 
@@ -9,6 +11,7 @@ const Context = @This();
 
 running: bool = true,
 assets: Assets = .{},
+allocator: std.mem.Allocator,
 driver: *const State = &State.states.Game,
 
 pub fn switch_driver(this: *Context, driver: *const State) !void {

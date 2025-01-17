@@ -13,7 +13,9 @@ var alloc = outer.allocator();
 pub fn main() !void {
     defer _ = outer.deinit();
 
-    var ctx: Context = .{};
+    var ctx: Context = .{
+        .allocator = alloc,
+    };
 
     raylib.initWindow(constants.SIZE_WIDTH, constants.SIZE_HEIGHT, "minijam - fox theme");
     defer raylib.closeWindow();
@@ -27,8 +29,8 @@ pub fn main() !void {
     raylib.setTargetFPS(60);
     raylib.setExitKey(.null);
 
-    for (states.all) |state| try state.init(alloc);
-    defer for (states.all) |state| state.deinit(alloc);
+    for (states.all) |state| try state.init(&ctx);
+    defer for (states.all) |state| state.deinit(&ctx);
 
     try ctx.driver.enter(&ctx);
 
