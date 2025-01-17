@@ -32,8 +32,7 @@ pub fn init(ctx: *Context) !void {
 }
 
 pub fn deinit(ctx: *Context) void {
-    _ = ctx;
-    coin_deck.deinit();
+    coin_deck.deinit(ctx.allocator);
 }
 
 pub fn enter(ctx: *Context) !void {
@@ -51,29 +50,55 @@ pub fn update(ctx: *Context) !void {
         try ctx.switch_driver(&State.states.PauseMenu);
     }
 
-    if (raylib.isKeyPressed(.space)) {
+    var new_bet_precentage: f32 = @floatCast(bet_precentage);
+    _ = raygui.guiSliderBar(.{
+        .x = @floatFromInt(constants.SIZE_WIDTH / 3),
+        .width = @floatFromInt(constants.SIZE_WIDTH / 3),
+        .y = 64,
+        .height = 64,
+    }, "", "", &new_bet_precentage, 0.0, 1.0);
+    bet_precentage = @floatCast(new_bet_precentage);
+
+    const should_flip =
+        raygui.guiButton(.{
+            .x = @floatFromInt(constants.SIZE_WIDTH / 3),
+            .width = @floatFromInt(constants.SIZE_WIDTH / 3),
+            .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64),
+            .height = 64,
+        }, "") != 0 or
+        raylib.isKeyPressed(.space);
+    if (should_flip) {
+        const bet_amount: @TypeOf(money) = @intFromFloat(@ceil(@as(f128, @floatFromInt(money)) * bet_precentage));
+        money = money - bet_amount;
+
         last_coin = coin_deck.flip(0.5);
+
         switch (last_coin) {
-            .loss => money -= @intFromFloat(@ceil(@as(f128, @floatFromInt(money)) * bet_precentage)),
-            .win  => money += @intFromFloat(@ceil(@as(f128, @floatFromInt(money)) * bet_precentage)),
+            .win => money += bet_amount * 2,
+            .loss => {},
+            .additive_win => |val| money += bet_amount + val,
         }
     }
 }
 
 pub fn render(ctx: *Context) !void {
     { // draw results of last coin flip
+        var coin_text_buffer = [_]u8{0} ** 256;
         const coin_text: [:0]const u8 = switch (last_coin) {
             .win => "heads",
             .loss => "tails",
+            .additive_win => |val| blk: {
+                break :blk try std.fmt.bufPrintZ(&coin_text_buffer, "+ ${d}.{d:02}", .{val / 100, val % 100});
+            },
         };
         const coin_text_width = raylib.measureText(coin_text.ptr, 32);
         std.debug.assert(coin_text_width >= 0);
         raylib.drawText(
             coin_text.ptr,
-            @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(coin_text_width, 2),
-            @intCast(constants.SIZE_HEIGHT * 3 / 4),
+            constants.SIZE_WIDTH / 2 - @divTrunc(coin_text_width, 2),
+            constants.SIZE_HEIGHT - 12 - 46,
             32,
-            raylib.Color.white,
+            raylib.Color.black
         );
     }
     { // draw current balance
@@ -84,31 +109,23 @@ pub fn render(ctx: *Context) !void {
         raylib.drawText(
             balance_text,
             @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(balance_text_width, 2),
-            4,
+            16,
             32,
             raylib.Color.white
         );
     }
     { // draw bet amount and slider
-        var new_bet_precentage: f32 = @floatCast(bet_precentage);
-        _ = raygui.guiSliderBar(.{
-            .x = @floatFromInt(constants.SIZE_WIDTH * 1 / 3),
-            .width = @floatFromInt(constants.SIZE_WIDTH * 1 / 3),
-            .y = 64.0,
-            .height = 24.0,
-        }, "0%", "100%", &new_bet_precentage, 0.0, 1.0);
-        bet_precentage = @floatCast(new_bet_precentage);
         const bet_amount: u64 = @intFromFloat(@ceil(@as(f128, @floatFromInt(money)) * bet_precentage));
         const bet_amount_text = try std.fmt.allocPrintZ(ctx.allocator, "Betting: ${d}.{d:02}", .{bet_amount / 100, bet_amount % 100});
         defer ctx.allocator.free(bet_amount_text);
-        const bet_amount_text_width = raylib.measureText(bet_amount_text.ptr, 24);
+        const bet_amount_text_width = raylib.measureText(bet_amount_text.ptr, 32);
         std.debug.assert(bet_amount_text_width >= 0);
         raylib.drawText(
             bet_amount_text,
             @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(bet_amount_text_width, 2),
-            92,
-            24,
-            raylib.Color.white
+            82,
+            32,
+            raylib.Color.black
         );
     }
 }
@@ -120,33 +137,51 @@ pub fn render(ctx: *Context) !void {
 /// etc here
 const Coin = union (enum) {
     /// aka heads
+    /// returns 200% of bet amount
     win: void,
     /// aka numbers / tails
+    /// doesnt return anything
     loss: void,
+    /// returns 100% of bet amount + value
+    /// unit: cent / $0.01
+    additive_win: u64,
+};
+
+/// the effect of a coin combined with a duration
+const Effect = struct {
+    coin: Coin,
+    duration: u32,
+
+    /// returns updated version of an effect
+    pub fn update(effect: Effect) ?Effect {
+        if (effect.duration <= 0) return null;
+        return Effect {
+            .coin = effect.coin,
+            .duration = effect.duration - 1,
+        };
+    }
 };
 
 /// some coins
 const CoinDeck = struct {
     rng: std.Random.DefaultPrng,
-    positive_deck: std.ArrayList(Coin),
-    negative_deck: std.ArrayList(Coin),
+    positive_deck: std.ArrayListUnmanaged(Coin),
+    negative_deck: std.ArrayListUnmanaged(Coin),
 
     /// need to call `deinit()` later to not leak memory
     pub fn init(initial_coins: usize, seed: u64, allocator: std.mem.Allocator) !CoinDeck {
         var outp: CoinDeck = undefined;
 
         // create decks
-        outp.positive_deck = std.ArrayList(Coin).init(allocator);
-        errdefer outp.positive_deck.deinit();
-        outp.negative_deck = std.ArrayList(Coin).init(allocator);
-        errdefer outp.positive_deck.deinit();
+        outp.positive_deck = try std.ArrayListUnmanaged(Coin).initCapacity(allocator, initial_coins);
+        errdefer outp.positive_deck.deinit(allocator);
+        outp.negative_deck = try std.ArrayListUnmanaged(Coin).initCapacity(allocator, initial_coins);
+        errdefer outp.positive_deck.deinit(allocator);
 
         // populate decks
-        try outp.positive_deck.ensureTotalCapacity(initial_coins);
-        try outp.negative_deck.ensureTotalCapacity(initial_coins);
         for (0..initial_coins) |_| {
-            try outp.positive_deck.append(.{ .win  = {} });
-            try outp.negative_deck.append(.{ .loss = {} });
+            outp.positive_deck.appendAssumeCapacity(.{ .win  = {} });
+            outp.negative_deck.appendAssumeCapacity(.{ .loss = {} });
         }
 
         // create rng
@@ -155,9 +190,9 @@ const CoinDeck = struct {
         return outp;
     }
     /// frees allocated memory
-    pub fn deinit(self: *CoinDeck) void {
-        self.positive_deck.deinit();
-        self.negative_deck.deinit();
+    pub fn deinit(self: *CoinDeck, allocator: std.mem.Allocator) void {
+        self.positive_deck.deinit(allocator);
+        self.negative_deck.deinit(allocator);
     }
 
     /// get a random coin from deck
