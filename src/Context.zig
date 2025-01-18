@@ -20,7 +20,7 @@ coin_deck: types.CoinDeck = undefined,
 last_coin: types.Coin = .{ .win = {} },
 /// unit: cent / $0.01
 /// may need to be increased if we get to over *a lot* money
-money: u64 = 10_00,
+money: u256 = 10_00,
 bet_precentage: f32 = 0.5,
 effects: types.EffectList = .{},
 

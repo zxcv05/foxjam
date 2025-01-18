@@ -16,10 +16,27 @@ pub const Coin = union(enum) {
     loss: void,
     /// returns 100% of bet amount + value
     /// unit: cent / $0.01
-    additive_win: u64,
+    additive_win: u256,
     /// next 2 flips will get a multiplier of value
     /// only if the result is positive tho, ofc
-    next_multiplier: u64,
+    next_multiplier: u256,
+    /// next 3 flips, when an effect is gotten, value is multiplied by value
+    /// doesnt apply to itself
+    next_value_multiplier: u256,
+    /// next 2 flips, when an effect is gotten, duration is multiplied by value
+    /// doesnt apply to itself
+    next_duration_multiplier: u32,
+    /// you lose only value ([0,1]) of money
+    lesser_loss: f32,
+    /// next 3 flips, youre value ([0,0.5]) less likely to get a negative coin
+    weighted_coin: f32,
+
+    /// generates a random coin based on a rarity
+    pub fn randomFromRarity(rarity: u16, rng: std.Random) Coin {
+        _ = rarity;
+        _ = rng;
+        @panic("not implemented yet");
+    }
 };
 
 /// the effect of a coin combined with a duration
@@ -45,7 +62,14 @@ pub const EffectList = struct {
     /// DO NOT OVERWRITE
     effects: Effects = .{},
     /// DO NOT OVERWRITE
-    multiplier: u64 = 1,
+    multiplier: u256 = 1,
+    /// DO NOT OVERWRITE
+    value_multiplier: u256 = 1,
+    /// DO NOT OVERWRITE
+    duration_multiplier: u32 = 1,
+    /// DO NOT OVERWRITE
+    /// gets added to positive chance
+    coin_weight: f32 = 0.0,
 
     pub fn deinit(self: *EffectList, allocator: std.mem.Allocator) void {
         var maybe_node = self.effects.first;
@@ -64,8 +88,11 @@ pub const EffectList = struct {
 
         // zig fmt: off
         switch (effect.coin) { // TODO: add new effects here
-            .next_multiplier => |val| self.multiplier *= val,
-            else => {},
+            .next_multiplier          => |val| self.multiplier *= val,
+            .next_value_multiplier    => |val| self.value_multiplier *= val,
+            .next_duration_multiplier => |val| self.duration_multiplier *= val,
+            .weighted_coin            => |val| self.coin_weight += val,
+            else => unreachable,
         }
         // zig fmt: on
     }
@@ -83,8 +110,11 @@ pub const EffectList = struct {
 
             // zig fmt: off
             switch (node.data.coin) { // TODO: add new effects here
-                .next_multiplier => |val| self.multiplier /= val,
-                else => {},
+                .next_multiplier          => |val| self.multiplier /= val,
+                .next_value_multiplier    => |val| self.value_multiplier /= val,
+                .next_duration_multiplier => |val| self.duration_multiplier /= val,
+                .weighted_coin            => |val| self.coin_weight -= val,
+                else => unreachable,
             }
             // zig fmt: on
 
@@ -147,4 +177,12 @@ pub const CoinDeck = struct {
         self.flips += 1;
         return coin;
     }
+};
+
+pub const ShopItem = union (enum) {
+    sold: void,
+    selling: struct {
+        coin: Coin,
+        price: u256,
+    },
 };
