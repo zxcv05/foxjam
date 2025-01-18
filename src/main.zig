@@ -30,7 +30,7 @@ pub fn main() !void {
     raylib.setExitKey(.null);
 
     try states.init(&ctx);
-    states.deinit(&ctx);
+    defer states.deinit(&ctx);
 
     try ctx.driver.enter(&ctx);
 

@@ -21,7 +21,7 @@ var last_coin: Coin = .{ .win = {} };
 /// may need to be increased if we get to over *a lot* money
 var money: u64 = 10_00;
 var bet_precentage: f128 = 0.5;
-var effects: EffectList = undefined;
+var effects: EffectList = .{};
 
 pub fn init(ctx: *Context) !void {
     coin_deck = try CoinDeck.init(
@@ -30,8 +30,6 @@ pub fn init(ctx: *Context) !void {
         ctx.allocator,
     );
     errdefer coin_deck.deinit(ctx.allocator);
-    effects = try EffectList.init(ctx.allocator);
-    errdefer effects.deinit(ctx.allocator);
 
     try coin_deck.positive_deck.append(ctx.allocator, .{ .additive_win = 10_00 });
     try coin_deck.negative_deck.append(ctx.allocator, .{ .next_multiplier = 2 });
@@ -64,14 +62,13 @@ pub fn update(ctx: *Context) !void {
     }, "", "", &new_bet_precentage, 0.0, 1.0);
     bet_precentage = @floatCast(new_bet_precentage);
 
-    const should_flip =
-        raygui.guiButton(.{
-            .x = @floatFromInt(constants.SIZE_WIDTH / 3),
-            .width = @floatFromInt(constants.SIZE_WIDTH / 3),
-            .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64),
-            .height = 64,
-        }, "") != 0 or
-        raylib.isKeyPressed(.space);
+    const should_flip = raygui.guiButton(.{
+        .x = @floatFromInt(constants.SIZE_WIDTH / 3),
+        .width = @floatFromInt(constants.SIZE_WIDTH / 3),
+        .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64),
+        .height = 64,
+    }, "") != 0 or raylib.isKeyPressed(.space);
+
     if (should_flip) {
         const bet_amount: @TypeOf(money) = @intFromFloat(@ceil(@as(f128, @floatFromInt(money)) * bet_precentage));
 
@@ -88,70 +85,57 @@ pub fn update(ctx: *Context) !void {
         }
         // zig fmt: on
 
-        effects.update();
+        effects.update(ctx.allocator);
     }
 }
 
 pub fn render(ctx: *Context) !void {
+    _ = ctx;
+
     raylib.clearBackground(raylib.Color.black);
     var text_buffer: [256]u8 = undefined;
 
     { // draw results of last coin flip
         // zig fmt: off
         const coin_text: [:0]const u8 = switch (last_coin) { // TODO: add new effects that get shown once flipping
-            .win             => "heads",
-            .loss            => "tails",
-            .additive_win    => |val| std.fmt.bufPrintZ(&text_buffer, "+ ${d}.{d:02}", .{val / 100, val % 100}) catch unreachable,
-            .next_multiplier => |val| std.fmt.bufPrintZ(&text_buffer, "next two x{d}", .{val}) catch unreachable,
+            .win             => "heads\x00",
+            .loss            => "tails\x00",
+            .additive_win    => |val| std.fmt.bufPrintZ(text_buffer[0..], "+ ${d}.{d:02}", .{val / 100, val % 100}) catch unreachable,
+            .next_multiplier => |val| std.fmt.bufPrintZ(text_buffer[0..], "next two x{d}", .{val}) catch unreachable,
         };
         // zig fmt: on
         const coin_text_width = raylib.measureText(coin_text.ptr, 32);
         std.debug.assert(coin_text_width >= 0);
-        raylib.drawText(
-            coin_text.ptr,
-            constants.SIZE_WIDTH / 2 - @divTrunc(coin_text_width, 2),
-            constants.SIZE_HEIGHT - 12 - 46,
-            32,
-            raylib.Color.black
-        );
+        raylib.drawText(coin_text.ptr, constants.SIZE_WIDTH / 2 - @divTrunc(coin_text_width, 2), constants.SIZE_HEIGHT - 12 - 46, 32, raylib.Color.black);
     }
+
     { // draw current balance
-        const balance_text = std.fmt.bufPrintZ(&text_buffer, "${d}.{d:02}", .{money / 100, money % 100}) catch unreachable;
+        const balance_text = std.fmt.bufPrintZ(text_buffer[0..], "${d}.{d:02}", .{ money / 100, money % 100 }) catch unreachable;
         const balance_text_width = raylib.measureText(balance_text.ptr, 32);
         std.debug.assert(balance_text_width >= 0);
-        raylib.drawText(
-            balance_text,
-            @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(balance_text_width, 2),
-            16,
-            32,
-            raylib.Color.white
-        );
+        raylib.drawText(balance_text, @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(balance_text_width, 2), 16, 32, raylib.Color.white);
     }
+
     { // draw bet amount and slider
         const bet_amount: u64 = @intFromFloat(@ceil(@as(f128, @floatFromInt(money)) * bet_precentage));
-        const bet_amount_text = std.fmt.bufPrintZ(&text_buffer, "Betting: ${d}.{d:02}", .{bet_amount / 100, bet_amount % 100}) catch unreachable;
+        const bet_amount_text = std.fmt.bufPrintZ(text_buffer[0..], "Betting: ${d}.{d:02}", .{ bet_amount / 100, bet_amount % 100 }) catch unreachable;
         const bet_amount_text_width = raylib.measureText(bet_amount_text.ptr, 32);
         std.debug.assert(bet_amount_text_width >= 0);
-        raylib.drawText(
-            bet_amount_text,
-            @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(bet_amount_text_width, 2),
-            82,
-            32,
-            raylib.Color.black
-        );
+        raylib.drawText(bet_amount_text, @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(bet_amount_text_width, 2), 82, 32, raylib.Color.black);
     }
-    for (effects.effects.items, 0..) |effect, i| { // draw current effects
-        const effect_text = switch (effect.coin) { // TODO: update to include new effects
-            .next_multiplier => |val| std.fmt.bufPrintZ(&text_buffer, "{d}x multiplier", .{val}) catch unreachable,
+
+    var effect_y: usize = 0;
+    var maybe_effect = effects.effects.first;
+    while (maybe_effect) |node| : (maybe_effect = node.next) {
+        defer effect_y += 14;
+
+        const effect_text = switch (node.data.coin) {
+            .next_multiplier => |val| std.fmt.bufPrintZ(text_buffer[0..], "{d}x multiplier", .{val}) catch unreachable,
+            .additive_win => |val| std.fmt.bufPrintZ(text_buffer[0..], "+{d} money", .{val}) catch unreachable,
             else => unreachable,
         };
-        raylib.drawText(
-            effect_text,
-            2,
-            @intCast(2 + i * 14),
-            2,
-            raylib.Color.white
-        );
+
+        raylib.drawText(effect_text, 2, @intCast(2 + effect_y), 2, raylib.Color.white);
     }
 }
 
@@ -183,7 +167,7 @@ const Effect = struct {
     /// returns updated version of an effect
     pub fn update(effect: Effect) ?Effect {
         if (effect.duration <= 0) return null;
-        return Effect {
+        return Effect{
             .coin = effect.coin,
             .duration = effect.duration - 1,
         };
@@ -193,45 +177,49 @@ const Effect = struct {
 /// a list of effects
 /// also keeps track of the total effects for convenience
 const EffectList = struct {
+    const Effects = std.DoublyLinkedList(Effect);
+
     /// DO NOT OVERWRITE
-    effects: std.ArrayListUnmanaged(Effect),
+    effects: Effects = .{},
     /// DO NOT OVERWRITE
     multiplier: u64 = 1,
 
-    pub fn init(allocator: std.mem.Allocator) !EffectList {
-        var outp: EffectList = .{
-            .effects = undefined,
-        };
-        outp.effects = try std.ArrayListUnmanaged(Effect).initCapacity(allocator, 1);
-        errdefer outp.effects.deinit(allocator);
-        return outp;
-    }
     pub fn deinit(self: *EffectList, allocator: std.mem.Allocator) void {
-        self.effects.deinit(allocator);
+        var maybe_node = self.effects.first;
+        while (maybe_node) |node| {
+            defer allocator.destroy(node);
+            defer maybe_node = node.next;
+        }
     }
 
     /// adds an effect and updates values
     pub fn addEffect(self: *EffectList, effect: Effect, allocator: std.mem.Allocator) !void {
-        try self.effects.append(allocator, effect);
-        switch (effect.coin) { // TODO: update with new effects
+        const new_node = try allocator.create(Effects.Node);
+        new_node.data = effect;
+
+        self.effects.append(new_node);
+
+        // TODO: update with new effects
+        switch (effect.coin) {
             .next_multiplier => |val| self.multiplier *= val,
             else => {},
         }
     }
+
     /// updates effect list
-    pub fn update(self: *EffectList) void {
-        var i: usize = 0;
-        while (i < self.effects.items.len) {
-            if (self.effects.items[i].update()) |updated_effect| {
-                self.effects.items[i] = updated_effect;
-                i += 1;
-            }
-            else {
-                switch (self.effects.items[i].coin) { // TODO: update with new effects
+    pub fn update(self: *EffectList, allocator: std.mem.Allocator) void {
+        var maybe_node = self.effects.first;
+        while (maybe_node) |node| : (maybe_node = node.next) {
+            if (node.data.update()) |updated_effect| {
+                node.data = updated_effect;
+            } else {
+                switch (node.data.coin) {
                     .next_multiplier => |val| self.multiplier /= val,
                     else => {},
                 }
-                _ = self.effects.orderedRemove(i);
+
+                self.effects.remove(node);
+                defer allocator.destroy(node);
             }
         }
     }
@@ -239,28 +227,32 @@ const EffectList = struct {
 
 /// some coins
 const CoinDeck = struct {
+    const Deck = std.ArrayListUnmanaged(Coin);
+
     rng: std.Random.DefaultPrng,
-    positive_deck: std.ArrayListUnmanaged(Coin),
-    negative_deck: std.ArrayListUnmanaged(Coin),
+    positive_deck: Deck,
+    negative_deck: Deck,
 
     /// need to call `deinit()` later to not leak memory
     pub fn init(initial_coins: usize, seed: u64, allocator: std.mem.Allocator) !CoinDeck {
-        var outp: CoinDeck = undefined;
 
         // create decks
-        outp.positive_deck = try std.ArrayListUnmanaged(Coin).initCapacity(allocator, initial_coins);
-        errdefer outp.positive_deck.deinit(allocator);
-        outp.negative_deck = try std.ArrayListUnmanaged(Coin).initCapacity(allocator, initial_coins);
-        errdefer outp.positive_deck.deinit(allocator);
+        var positive_deck: Deck = try .initCapacity(allocator, 128);
+        var negative_deck: Deck = try .initCapacity(allocator, 128);
 
-        try outp.positive_deck.appendNTimes(.win, initial_coins);
-        try outp.negative_deck.appendNTimes(.loss, initial_coins);
+        positive_deck.appendNTimesAssumeCapacity(.win, initial_coins);
+        negative_deck.appendNTimesAssumeCapacity(.loss, initial_coins);
 
         // create rng
-        outp.rng = std.Random.DefaultPrng.init(seed);
+        const rng = std.Random.DefaultPrng.init(seed);
 
-        return outp;
+        return CoinDeck{
+            .rng = rng,
+            .positive_deck = positive_deck,
+            .negative_deck = negative_deck,
+        };
     }
+
     /// frees allocated memory
     pub fn deinit(self: *CoinDeck, allocator: std.mem.Allocator) void {
         self.positive_deck.deinit(allocator);
@@ -273,11 +265,10 @@ const CoinDeck = struct {
         const rng = self.rng.random();
 
         // get deck
-        const is_positive = rng.float(f32) < positive_chance;
-        const deck =
-            if (is_positive) self.positive_deck else self.negative_deck;
-
-        // TODO: This segfaults after clicking the bar once and trying to flip
+        const deck = if (rng.float(f32) < positive_chance)
+            self.positive_deck
+        else
+            self.negative_deck;
 
         // get random coin from deck
         const random_index = rng.uintLessThan(usize, deck.items.len);
