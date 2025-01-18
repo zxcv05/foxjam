@@ -27,7 +27,7 @@ pub fn init(ctx: *Context) !void {
     coin_deck = try CoinDeck.init(
         constants.initial_coins,
         @truncate(@abs(std.time.nanoTimestamp())),
-        ctx.allocator
+        ctx.allocator,
     );
     errdefer coin_deck.deinit(ctx.allocator);
     effects = try EffectList.init(ctx.allocator);
@@ -44,12 +44,10 @@ pub fn deinit(ctx: *Context) void {
 
 pub fn enter(ctx: *Context) !void {
     _ = ctx;
-    std.debug.print("Entered Game state\n", .{});
 }
 
 pub fn leave(ctx: *Context) !void {
     _ = ctx;
-    std.debug.print("Left Game state\n", .{});
 }
 
 pub fn update(ctx: *Context) !void {
@@ -78,7 +76,6 @@ pub fn update(ctx: *Context) !void {
         const bet_amount: @TypeOf(money) = @intFromFloat(@ceil(@as(f128, @floatFromInt(money)) * bet_precentage));
 
         last_coin = coin_deck.flip(0.5);
-
         // zig fmt: off
         switch (last_coin) { // TODO: add new effects that get applied once flipping
             .win             => money += bet_amount * effects.multiplier,
@@ -96,9 +93,9 @@ pub fn update(ctx: *Context) !void {
 }
 
 pub fn render(ctx: *Context) !void {
-    _ = ctx;
-
+    raylib.clearBackground(raylib.Color.black);
     var text_buffer: [256]u8 = undefined;
+
     { // draw results of last coin flip
         // zig fmt: off
         const coin_text: [:0]const u8 = switch (last_coin) { // TODO: add new effects that get shown once flipping
@@ -163,7 +160,7 @@ pub fn render(ctx: *Context) !void {
 /// - next coin multiplier
 /// - extra dice
 /// etc here
-const Coin = union (enum) {
+const Coin = union(enum) {
     /// aka heads
     /// returns 200% of bet amount
     win: void,
@@ -256,11 +253,8 @@ const CoinDeck = struct {
         outp.negative_deck = try std.ArrayListUnmanaged(Coin).initCapacity(allocator, initial_coins);
         errdefer outp.positive_deck.deinit(allocator);
 
-        // populate decks
-        for (0..initial_coins) |_| {
-            outp.positive_deck.appendAssumeCapacity(.{ .win  = {} });
-            outp.negative_deck.appendAssumeCapacity(.{ .loss = {} });
-        }
+        try outp.positive_deck.appendNTimes(.win, initial_coins);
+        try outp.negative_deck.appendNTimes(.loss, initial_coins);
 
         // create rng
         outp.rng = std.Random.DefaultPrng.init(seed);
@@ -281,8 +275,9 @@ const CoinDeck = struct {
         // get deck
         const is_positive = rng.float(f32) < positive_chance;
         const deck =
-            if (is_positive) self.positive_deck
-            else             self.negative_deck;
+            if (is_positive) self.positive_deck else self.negative_deck;
+
+        // TODO: This segfaults after clicking the bar once and trying to flip
 
         // get random coin from deck
         const random_index = rng.uintLessThan(usize, deck.items.len);
