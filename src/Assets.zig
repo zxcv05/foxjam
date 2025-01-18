@@ -15,6 +15,15 @@ const Assets = @This();
 zxcv_pfp: raylib.Texture2D = undefined,
 click8a: raylib.Sound = undefined,
 
+coin_01: raylib.Texture2D = undefined,
+coin_02: raylib.Texture2D = undefined,
+coin_03: raylib.Texture2D = undefined,
+coin_04: raylib.Texture2D = undefined,
+coin_05: raylib.Texture2D = undefined,
+coin_06: raylib.Texture2D = undefined,
+coin_07: raylib.Texture2D = undefined,
+coin_08: raylib.Texture2D = undefined,
+
 /// loads all the assets in place
 pub fn init(this: *Assets) !void {
     if (constants.is_web) return try this.init_emscripten();

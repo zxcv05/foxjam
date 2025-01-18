@@ -5,3 +5,7 @@
 - `style_dark.rgs` by `raysan`
   - https://github.com/raysan5/raygui/blob/master/styles/dark/style_dark.rgs
   - Zlib license
+
+- `coin_0{1..8}` by `Puddin`
+  - https://opengameart.org/content/rotating-coin
+  - "100% To free use in another games and more."
