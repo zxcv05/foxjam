@@ -22,7 +22,7 @@ var shop_items: [constants.max_shop_items]types.ShopItem = undefined;
 var shop_refreshes: u16 = 0;
 
 var show_coin: bool = false;
-var coin_anim: Animation = .init(8, 8.0);
+var coin_anim: Animation = .init(8, 32.0);
 
 pub fn init(ctx: *Context) !void {
     ctx.coin_deck = try .init(
@@ -115,7 +115,7 @@ pub fn update(ctx: *Context) !void {
 
     if (show_coin) {
         defer coin_anim.update();
-        if (coin_anim.frames_played >= 16) show_coin = false;
+        if (coin_anim.frames_played >= 32) show_coin = false;
     }
 }
 
