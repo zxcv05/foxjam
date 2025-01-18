@@ -29,8 +29,8 @@ pub fn main() !void {
     raylib.setTargetFPS(60);
     raylib.setExitKey(.null);
 
-    for (states.all) |state| try state.init(&ctx);
-    defer for (states.all) |state| state.deinit(&ctx);
+    try states.init(&ctx);
+    states.deinit(&ctx);
 
     try ctx.driver.enter(&ctx);
 
@@ -39,7 +39,6 @@ pub fn main() !void {
 
         raylib.beginDrawing();
         defer raylib.endDrawing();
-        raylib.clearBackground(raylib.Color.black);
 
         try ctx.driver.render(&ctx);
     }

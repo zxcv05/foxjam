@@ -26,7 +26,7 @@ pub fn init(ctx: *Context) !void {
     coin_deck = try CoinDeck.init(
         constants.initial_coins,
         @truncate(@abs(std.time.nanoTimestamp())),
-        ctx.allocator
+        ctx.allocator,
     );
     errdefer coin_deck.deinit();
 }
@@ -38,12 +38,10 @@ pub fn deinit(ctx: *Context) void {
 
 pub fn enter(ctx: *Context) !void {
     _ = ctx;
-    std.debug.print("Entered Game state\n", .{});
 }
 
 pub fn leave(ctx: *Context) !void {
     _ = ctx;
-    std.debug.print("Left Game state\n", .{});
 }
 
 pub fn update(ctx: *Context) !void {
@@ -55,12 +53,14 @@ pub fn update(ctx: *Context) !void {
         last_coin = coin_deck.flip(0.5);
         switch (last_coin) {
             .loss => money -= @intFromFloat(@ceil(@as(f128, @floatFromInt(money)) * bet_precentage)),
-            .win  => money += @intFromFloat(@ceil(@as(f128, @floatFromInt(money)) * bet_precentage)),
+            .win => money += @intFromFloat(@ceil(@as(f128, @floatFromInt(money)) * bet_precentage)),
         }
     }
 }
 
 pub fn render(ctx: *Context) !void {
+    raylib.clearBackground(raylib.Color.black);
+
     { // draw results of last coin flip
         const coin_text: [:0]const u8 = switch (last_coin) {
             .win => "heads",
@@ -77,17 +77,11 @@ pub fn render(ctx: *Context) !void {
         );
     }
     { // draw current balance
-        const balance_text = try std.fmt.allocPrintZ(ctx.allocator, "${d}.{d:02}", .{money / 100, money % 100});
+        const balance_text = try std.fmt.allocPrintZ(ctx.allocator, "${d}.{d:02}", .{ money / 100, money % 100 });
         defer ctx.allocator.free(balance_text);
         const balance_text_width = raylib.measureText(balance_text.ptr, 32);
         std.debug.assert(balance_text_width >= 0);
-        raylib.drawText(
-            balance_text,
-            @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(balance_text_width, 2),
-            4,
-            32,
-            raylib.Color.white
-        );
+        raylib.drawText(balance_text, @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(balance_text_width, 2), 4, 32, raylib.Color.white);
     }
     { // draw bet amount and slider
         var new_bet_precentage: f32 = @floatCast(bet_precentage);
@@ -99,17 +93,11 @@ pub fn render(ctx: *Context) !void {
         }, "0%", "100%", &new_bet_precentage, 0.0, 1.0);
         bet_precentage = @floatCast(new_bet_precentage);
         const bet_amount: u64 = @intFromFloat(@ceil(@as(f128, @floatFromInt(money)) * bet_precentage));
-        const bet_amount_text = try std.fmt.allocPrintZ(ctx.allocator, "Betting: ${d}.{d:02}", .{bet_amount / 100, bet_amount % 100});
+        const bet_amount_text = try std.fmt.allocPrintZ(ctx.allocator, "Betting: ${d}.{d:02}", .{ bet_amount / 100, bet_amount % 100 });
         defer ctx.allocator.free(bet_amount_text);
         const bet_amount_text_width = raylib.measureText(bet_amount_text.ptr, 24);
         std.debug.assert(bet_amount_text_width >= 0);
-        raylib.drawText(
-            bet_amount_text,
-            @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(bet_amount_text_width, 2),
-            92,
-            24,
-            raylib.Color.white
-        );
+        raylib.drawText(bet_amount_text, @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(bet_amount_text_width, 2), 92, 24, raylib.Color.white);
     }
 }
 
@@ -118,7 +106,7 @@ pub fn render(ctx: *Context) !void {
 /// - next coin multiplier
 /// - extra dice
 /// etc here
-const Coin = union (enum) {
+const Coin = union(enum) {
     /// aka heads
     win: void,
     /// aka numbers / tails
@@ -145,7 +133,7 @@ const CoinDeck = struct {
         try outp.positive_deck.ensureTotalCapacity(initial_coins);
         try outp.negative_deck.ensureTotalCapacity(initial_coins);
         for (0..initial_coins) |_| {
-            try outp.positive_deck.append(.{ .win  = {} });
+            try outp.positive_deck.append(.{ .win = {} });
             try outp.negative_deck.append(.{ .loss = {} });
         }
 
@@ -168,8 +156,9 @@ const CoinDeck = struct {
         // get deck
         const is_positive = rng.float(f32) < positive_chance;
         const deck =
-            if (is_positive) self.positive_deck
-            else             self.negative_deck;
+            if (is_positive) self.positive_deck else self.negative_deck;
+
+        // TODO: This segfaults after clicking the bar once and trying to flip
 
         // get random coin from deck
         const random_index = rng.uintLessThan(usize, deck.items.len);

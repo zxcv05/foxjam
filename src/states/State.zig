@@ -10,12 +10,21 @@ pub const states = struct {
     pub const PauseMenu = @import("pause_menu.zig").interface;
     // zig fmt: on
 
-    /// list of all states, needed for initializationa dn deinitialization
-    /// yes i know, code duplication bad, but this is sadly needed unless u come up with something smarter
-    pub const all = [_]State {
-        Game,
-        PauseMenu,
-    };
+    pub fn init(ctx: *Context) !void {
+        inline for (@typeInfo(states).@"struct".decls) |decl_info| {
+            const decl = @field(states, decl_info.name);
+            if (@typeInfo(@TypeOf(decl)) != .@"struct") continue;
+            try decl.init(ctx);
+        }
+    }
+
+    pub fn deinit(ctx: *Context) void {
+        inline for (@typeInfo(states).@"struct".decls) |decl_info| {
+            const decl = @field(states, decl_info.name);
+            if (@typeInfo(@TypeOf(decl)) != .@"struct") continue;
+            decl.deinit(ctx);
+        }
+    }
 };
 
 init: *const fn (*Context) anyerror!void,
