@@ -13,7 +13,6 @@ const Serde = @import("serde.zig");
 const ContextSerde = Serde(Context, &.{ "coin_deck", "last_coin", "money", "bet_percentage", "effects" });
 
 const Context = @This();
-const constants = @import("constants.zig");
 
 running: bool = true,
 assets: Assets = .{},
