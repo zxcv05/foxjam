@@ -8,3 +8,5 @@ pub const is_web = builtin.os.tag == .emscripten;
 
 /// coins per deck at start of game
 pub const initial_coins = 5;
+
+pub const max_shop_items = 3;

@@ -62,11 +62,12 @@ pub const EffectList = struct {
 
         self.effects.append(new_node);
 
-        // TODO: update with new effects
-        switch (effect.coin) {
+        // zig fmt: off
+        switch (effect.coin) { // TODO: add new effects here
             .next_multiplier => |val| self.multiplier *= val,
             else => {},
         }
+        // zig fmt: on
     }
 
     /// updates effect list
@@ -80,10 +81,12 @@ pub const EffectList = struct {
                 continue;
             }
 
-            switch (node.data.coin) {
+            // zig fmt: off
+            switch (node.data.coin) { // TODO: add new effects here
                 .next_multiplier => |val| self.multiplier /= val,
                 else => {},
             }
+            // zig fmt: on
 
             self.effects.remove(node);
             defer allocator.destroy(node);
@@ -98,6 +101,7 @@ pub const CoinDeck = struct {
     rng: std.Random.DefaultPrng,
     positive_deck: Deck,
     negative_deck: Deck,
+    flips: u64 = 0,
 
     /// need to call `deinit()` later to not leak memory
     pub fn init(initial_coins: usize, seed: u64, allocator: std.mem.Allocator) !CoinDeck {
@@ -132,15 +136,15 @@ pub const CoinDeck = struct {
         const rng = self.rng.random();
 
         // get deck
-        const deck = if (rng.float(f32) < positive_chance)
-            self.positive_deck
-        else
-            self.negative_deck;
+        const deck =
+            if (rng.float(f32) < positive_chance) self.positive_deck
+            else                                  self.negative_deck;
 
         // get random coin from deck
         const random_index = rng.uintLessThan(usize, deck.items.len);
         const coin = deck.items[random_index];
 
+        self.flips += 1;
         return coin;
     }
 };

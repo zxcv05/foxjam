@@ -62,15 +62,13 @@ pub fn update(ctx: *Context) !void {
 }
 
 pub fn render(ctx: *Context) !void {
+    _ = ctx;
     var buffer: [64]u8 = undefined;
 
     raylib.clearBackground(raylib.Color.black);
     const text_color = raylib.getColor(@bitCast(raygui.guiGetStyle(.default, raygui.GuiControlProperty.base_color_pressed)));
 
     raylib.drawText("Stats", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Stats", 48), 2), 24, 48, text_color);
-
-    const pos_deck_text = std.fmt.bufPrintZ(buffer[0..], "Chance for positive coin: {d:.2}%", .{ctx.positive_chance * 100}) catch unreachable;
-    raylib.drawText(pos_deck_text, 15, 110, 24, text_color);
 
     const coins_y = 150;
 
