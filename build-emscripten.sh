@@ -9,4 +9,4 @@
 ls -p res | grep -v / >| src/res.txt
 
 # This will output the project to zig-out/htmlout
-zig build -Dtarget=wasm32-emscripten --sysroot /usr/lib/emsdk/upstream/emscripten $@
+zig build -Doptimize=ReleaseSmall -Dtarget=wasm32-emscripten --sysroot /usr/lib/emsdk/upstream/emscripten $@

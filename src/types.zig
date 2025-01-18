@@ -101,10 +101,11 @@ pub const CoinDeck = struct {
 
     /// need to call `deinit()` later to not leak memory
     pub fn init(initial_coins: usize, seed: u64, allocator: std.mem.Allocator) !CoinDeck {
-
         // create decks
-        var positive_deck: Deck = try .initCapacity(allocator, 128);
-        var negative_deck: Deck = try .initCapacity(allocator, 128);
+
+        // TODO : Emscripten build fails here
+        var positive_deck: Deck = try .initCapacity(allocator, 8);
+        var negative_deck: Deck = try .initCapacity(allocator, 8);
 
         positive_deck.appendNTimesAssumeCapacity(.win, initial_coins);
         negative_deck.appendNTimesAssumeCapacity(.loss, initial_coins);

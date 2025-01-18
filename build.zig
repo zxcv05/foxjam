@@ -75,6 +75,10 @@ pub fn build_emscripten(
     exe.root_module.addImport("raygui", raygui_module);
 
     const link_step = try raylib.emcc.linkWithEmscripten(b, &[_]*std.Build.Step.Compile{ exe, raylib_library });
+    // link_step.addArg("-sALLOW_MEMORY_GROWTH");
+    link_step.addArg("-sINITIAL_MEMORY=268435456");
+    link_step.addArg("-sMALLOC=emmalloc-memvalidate");
+    link_step.addArg("-sASSERTIONS=3");
     link_step.addArg("--embed-file");
     link_step.addArg("res/");
 
