@@ -13,6 +13,7 @@ const Serde = @import("serde.zig");
 const ContextSerde = Serde(Context, &.{ "coin_deck", "last_coin", "money", "bet_percentage", "effects" });
 
 const Context = @This();
+const constants = @import("constants.zig");
 
 running: bool = true,
 assets: Assets = .{},
@@ -23,7 +24,7 @@ coin_deck: types.CoinDeck = undefined,
 last_coin: types.Coin = .{ .win = {} },
 /// unit: cent / $0.01
 /// may need to be increased if we get to over *a lot* money
-money: u256 = 10_00,
+money: u256 = constants.starting_money,
 bet_percentage: f32 = 0.5,
 effects: types.EffectList = .{},
 

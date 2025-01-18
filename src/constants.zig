@@ -10,3 +10,6 @@ pub const is_web = builtin.os.tag == .emscripten;
 pub const initial_coins = 5;
 
 pub const max_shop_items = 3;
+
+pub const starting_money = 10_00;
+pub const work_money = 5_00;

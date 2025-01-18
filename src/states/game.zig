@@ -52,10 +52,20 @@ pub fn update(ctx: *Context) !void {
         .height = 64,
     }, "", "", &ctx.bet_percentage, 0.0, 1.0);
 
+    const going_to_work = raygui.guiButton(.{
+        .x = 12,
+        .width = 64,
+        .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64),
+        .height = 64,
+    }, "") != 0;
+    if (going_to_work) {
+        ctx.money += constants.work_money;
+    }
+
     const should_flip =
         raygui.guiButton(.{
-            .x = 12,
-            .width = @floatFromInt(constants.SIZE_WIDTH - 24),
+            .x = 12 + 64 + 12,
+            .width = @floatFromInt(constants.SIZE_WIDTH - 12 - 64 - 12 - 12),
             .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64),
             .height = 64,
         }, "") != 0 or
@@ -121,7 +131,7 @@ pub fn render(ctx: *Context) !void {
         // zig fmt: on
         const coin_text_width = raylib.measureText(coin_text.ptr, 32);
         std.debug.assert(coin_text_width >= 0);
-        raylib.drawText(coin_text.ptr, constants.SIZE_WIDTH / 2 - @divTrunc(coin_text_width, 2), constants.SIZE_HEIGHT - 12 - 46, 32, raylib.Color.black);
+        raylib.drawText(coin_text.ptr, (constants.SIZE_WIDTH + 32 + 6 + 6) / 2 - @divTrunc(coin_text_width, 2), constants.SIZE_HEIGHT - 12 - 46, 32, raylib.Color.black);
     }
     { // draw current balance
         const balance_text = std.fmt.bufPrintZ(&text_buffer, "${d}.{d:02}", .{ ctx.money / 100, ctx.money % 100 }) catch unreachable;
@@ -149,6 +159,15 @@ pub fn render(ctx: *Context) !void {
             else => unreachable,
         };
         raylib.drawText(effect_text, 2, @intCast(2 + i * 14), 2, raylib.Color.white);
+    }
+    { // draw work dollar sign
+        raylib.drawText(
+            "$",
+            12 + 32 - @divTrunc(raylib.measureText("$", 32), 2),
+            constants.SIZE_HEIGHT - 12 - 46,
+            32,
+            raylib.Color.green
+        );
     }
 
     if (show_coin) {
