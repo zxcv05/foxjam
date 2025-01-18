@@ -8,6 +8,8 @@ pub const states = struct {
     // zig fmt: off
     pub const Game      = @import("game.zig").interface;
     pub const PauseMenu = @import("pause_menu.zig").interface;
+    pub const Help      = @import("help.zig").interface;
+    pub const Stats     = @import("stats.zig").interface;
     // zig fmt: on
 
     pub fn init(ctx: *Context) !void {

@@ -37,16 +37,22 @@ pub fn update(ctx: *Context) !void {
 }
 
 pub fn render(ctx: *Context) !void {
+    _ = ctx;
+
+    raylib.clearBackground(raylib.Color.black);
     const text_color = raylib.getColor(@bitCast(raygui.guiGetStyle(.default, raygui.GuiControlProperty.base_color_pressed)));
 
-    raylib.drawText("Paused", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Paused", 48), 2), 24, 48, text_color);
+    raylib.drawText("Help", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Help", 48), 2), 24, 48, text_color);
 
-    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 180 }, "Go back") > 0)
-        try ctx.switch_driver(&State.states.Game);
-
-    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 250 }, "Controls") > 0)
-        try ctx.switch_driver(&State.states.Help);
-
-    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 320 }, "Exit") > 0)
-        ctx.running = false;
+    raylib.drawText(
+        \\ Press Escape to go back
+        \\
+        \\ # Global
+        \\ Escape : Pause menu or "go back"
+        \\ H : Show Help
+        \\ I : Show Stats
+        \\
+        \\ # In game
+        \\ Space : Flip coin
+    , 20, 120, 24, text_color);
 }
