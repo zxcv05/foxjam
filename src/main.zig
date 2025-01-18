@@ -3,9 +3,9 @@ const raylib = @import("raylib");
 const raygui = @import("raygui");
 
 const constants = @import("constants.zig");
-
 const Context = @import("Context.zig");
 const State = @import("states/State.zig");
+const serde = @import("serde.zig");
 
 var outer = std.heap.GeneralPurposeAllocator(.{}).init;
 var alloc = outer.allocator();
@@ -13,9 +13,25 @@ var alloc = outer.allocator();
 pub fn main() !void {
     defer _ = outer.deinit();
 
-    var ctx: Context = .{
-        .allocator = alloc,
+    const config_dir_path = try std.fs.getAppDataDir(alloc, "foxjam");
+    defer alloc.free(config_dir_path);
+    std.fs.makeDirAbsolute(config_dir_path) catch {};
+
+    var config_dir = try std.fs.openDirAbsolute(config_dir_path, .{});
+    defer config_dir.close();
+
+    var ctx = get_ctx: {
+        const file = config_dir.openFile("ctx.sav", .{ .mode = .read_only }) catch {
+            break :get_ctx try Context.init(alloc);
+        };
+        defer file.close();
+
+        break :get_ctx serde.deserialize(Context, alloc, file.reader().any()) catch |e| {
+            std.log.err("failed loading ctx: {s}", .{@errorName(e)});
+            break :get_ctx try Context.init(alloc);
+        };
     };
+    defer ctx.deinit();
 
     raylib.initWindow(constants.SIZE_WIDTH, constants.SIZE_HEIGHT, "minijam - fox theme");
     defer raylib.closeWindow();
@@ -35,6 +51,16 @@ pub fn main() !void {
     try State.states.init(&ctx);
     defer State.states.deinit(&ctx);
 
+    defer _ = blk: {
+        const file = config_dir.createFile("ctx.sav", .{}) catch |e| {
+            std.log.err("failed to open ctx.sav: {s}", .{@errorName(e)});
+            break :blk;
+        };
+
+        defer file.close();
+        serde.serialize(ctx, file.writer().any()) catch |e| std.log.err("failed to save ctx: {s}", .{@errorName(e)});
+    };
+
     try ctx.driver.enter(&ctx);
 
     while (ctx.running and !raylib.windowShouldClose()) {
@@ -49,4 +75,8 @@ pub fn main() !void {
 
         try ctx.driver.render(&ctx);
     }
+}
+
+test {
+    std.testing.refAllDecls(serde);
 }

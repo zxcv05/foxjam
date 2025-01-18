@@ -71,6 +71,50 @@ pub const EffectList = struct {
     /// gets added to positive chance
     coin_weight: f32 = 0.0,
 
+    pub fn serialize(this: *const EffectList, writer: std.io.AnyWriter) !void {
+        try writer.writeInt(u256, this.multiplier, .big);
+        try writer.writeInt(u256, this.value_multiplier, .big);
+        try writer.writeInt(u32, this.duration_multiplier, .big);
+
+        try writer.writeAll(std.mem.asBytes(&this.coin_weight));
+
+        try writer.writeInt(usize, this.effects.len, .big);
+        var maybe_node = this.effects.first;
+        while (maybe_node) |node| : (maybe_node = node.next)
+            try writer.writeAll(std.mem.asBytes(&node.data));
+    }
+
+    pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !EffectList {
+        const multiplier = try reader.readInt(u256, .big);
+        const value_multiplier = try reader.readInt(u256, .big);
+        const duration_multiplier = try reader.readInt(u32, .big);
+
+        var coin_weight_bytes: [@sizeOf(f32)]u8 = undefined;
+        _ = try reader.readAll(coin_weight_bytes[0..]);
+        const coin_weight = std.mem.bytesToValue(f32, coin_weight_bytes[0..]);
+
+        var effects: Effects = .{};
+
+        const effects_len = try reader.readInt(usize, .big);
+        for (0..effects_len) |_| {
+            var effect_bytes: [@sizeOf(Effect)]u8 = undefined;
+            _ = try reader.readAll(effect_bytes[0..]);
+
+            const node = try alloc.create(Effects.Node);
+            node.data = std.mem.bytesToValue(Effect, effect_bytes[0..]);
+
+            effects.append(node);
+        }
+
+        return .{
+            .effects = effects,
+            .multiplier = multiplier,
+            .value_multiplier = value_multiplier,
+            .duration_multiplier = duration_multiplier,
+            .coin_weight = coin_weight,
+        };
+    }
+
     pub fn deinit(self: *EffectList, allocator: std.mem.Allocator) void {
         var maybe_node = self.effects.first;
         while (maybe_node) |node| {
@@ -133,8 +177,48 @@ pub const CoinDeck = struct {
     negative_deck: Deck,
     flips: u64 = 0,
 
+    pub fn serialize(this: *const CoinDeck, writer: std.io.AnyWriter) !void {
+        try writer.writeInt(u64, this.flips, .big);
+
+        try writer.writeInt(usize, this.positive_deck.items.len, .big);
+        for (this.positive_deck.items) |*item|
+            try writer.writeAll(std.mem.asBytes(item));
+
+        try writer.writeInt(usize, this.negative_deck.items.len, .big);
+        for (this.negative_deck.items) |*item|
+            try writer.writeAll(std.mem.asBytes(item));
+    }
+
+    pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !CoinDeck {
+        const rng = std.Random.DefaultPrng.init(@bitCast(std.time.microTimestamp()));
+        const flips = try reader.readInt(u64, .big);
+
+        const pos_deck_size = try reader.readInt(usize, .big);
+        var pos_deck: Deck = try .initCapacity(alloc, pos_deck_size);
+        for (0..pos_deck_size) |_| {
+            var buffer: [@sizeOf(Coin)]u8 = undefined;
+            _ = try reader.readAll(buffer[0..]);
+            pos_deck.appendAssumeCapacity(std.mem.bytesToValue(Coin, buffer[0..]));
+        }
+
+        const neg_deck_size = try reader.readInt(usize, .big);
+        var neg_deck: Deck = try .initCapacity(alloc, neg_deck_size);
+        for (0..neg_deck_size) |_| {
+            var buffer: [@sizeOf(Coin)]u8 = undefined;
+            _ = try reader.readAll(buffer[0..]);
+            neg_deck.appendAssumeCapacity(std.mem.bytesToValue(Coin, buffer[0..]));
+        }
+
+        return .{
+            .rng = rng,
+            .flips = flips,
+            .positive_deck = pos_deck,
+            .negative_deck = neg_deck,
+        };
+    }
+
     /// need to call `deinit()` later to not leak memory
-    pub fn init(initial_coins: usize, seed: u64, allocator: std.mem.Allocator) !CoinDeck {
+    pub fn init(initial_coins: usize, allocator: std.mem.Allocator) !CoinDeck {
         // create decks
 
         // TODO : Emscripten build fails here
@@ -145,7 +229,7 @@ pub const CoinDeck = struct {
         negative_deck.appendNTimesAssumeCapacity(.loss, initial_coins);
 
         // create rng
-        const rng = std.Random.DefaultPrng.init(seed);
+        const rng = std.Random.DefaultPrng.init(@bitCast(std.time.microTimestamp()));
 
         return CoinDeck{
             .rng = rng,
@@ -167,8 +251,7 @@ pub const CoinDeck = struct {
 
         // get deck
         const deck =
-            if (rng.float(f32) < positive_chance) self.positive_deck
-            else                                  self.negative_deck;
+            if (rng.float(f32) < positive_chance) self.positive_deck else self.negative_deck;
 
         // get random coin from deck
         const random_index = rng.uintLessThan(usize, deck.items.len);
@@ -179,7 +262,7 @@ pub const CoinDeck = struct {
     }
 };
 
-pub const ShopItem = union (enum) {
+pub const ShopItem = union(enum) {
     sold: void,
     selling: struct {
         coin: Coin,

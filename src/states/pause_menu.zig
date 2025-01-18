@@ -41,6 +41,13 @@ pub fn render(ctx: *Context) !void {
 
     raylib.drawText("Paused", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Paused", 48), 2), 24, 48, text_color);
 
+    if (raygui.guiButton(.{ .x = 10, .y = 10, .width = 100, .height = 50 }, "Reset") > 0) {
+        const allocator = ctx.allocator;
+
+        ctx.deinit();
+        ctx.* = try .init(allocator);
+    }
+
     if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 180 }, "Go back") > 0)
         try ctx.switch_driver(&State.states.Game);
 

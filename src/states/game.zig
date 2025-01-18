@@ -25,34 +25,19 @@ var show_coin: bool = false;
 var coin_anim: Animation = .init(8, 32.0);
 
 pub fn init(ctx: *Context) !void {
-    ctx.coin_deck = try .init(
-        constants.initial_coins,
-        @truncate(@abs(std.time.nanoTimestamp())),
-        ctx.allocator
-    );
-    errdefer ctx.coin_deck.deinit(ctx.allocator);
-    //refresh_shop();
-
-    try ctx.coin_deck.positive_deck.append(ctx.allocator, .{ .next_multiplier = 3});
-    try ctx.coin_deck.positive_deck.append(ctx.allocator, .{ .next_value_multiplier = 3});
-    try ctx.coin_deck.positive_deck.append(ctx.allocator, .{ .next_duration_multiplier = 3 });
-    try ctx.coin_deck.negative_deck.append(ctx.allocator, .{ .weighted_coin = 0.25 });
-    try ctx.coin_deck.negative_deck.append(ctx.allocator, .{ .lesser_loss = 0.75 });
+    _ = ctx;
 }
 
 pub fn deinit(ctx: *Context) void {
-    ctx.effects.deinit(ctx.allocator);
-    ctx.coin_deck.deinit(ctx.allocator);
+    _ = ctx;
 }
 
 pub fn enter(ctx: *Context) !void {
     _ = ctx;
-    std.debug.print("Entered Game state\n", .{});
 }
 
 pub fn leave(ctx: *Context) !void {
     _ = ctx;
-    std.debug.print("Left Game state\n", .{});
 }
 
 pub fn update(ctx: *Context) !void {
@@ -65,7 +50,7 @@ pub fn update(ctx: *Context) !void {
         .width = @floatFromInt(constants.SIZE_WIDTH / 3),
         .y = 64,
         .height = 64,
-    }, "", "", &ctx.bet_precentage, 0.0, 1.0);
+    }, "", "", &ctx.bet_percentage, 0.0, 1.0);
 
     const should_flip =
         raygui.guiButton(.{
@@ -77,7 +62,7 @@ pub fn update(ctx: *Context) !void {
         raylib.isKeyPressed(.space);
 
     if (should_flip) {
-        const bet_amount: @TypeOf(ctx.money) = @intFromFloat(@ceil(@as(f32, @floatFromInt(ctx.money)) * ctx.bet_precentage));
+        const bet_amount: @TypeOf(ctx.money) = @intFromFloat(@ceil(@as(f32, @floatFromInt(ctx.money)) * ctx.bet_percentage));
 
         coin_anim.frames_played = 0;
         show_coin = true;
@@ -145,7 +130,7 @@ pub fn render(ctx: *Context) !void {
         raylib.drawText(balance_text, @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(balance_text_width, 2), 16, 32, raylib.Color.white);
     }
     { // draw bet amount and slider
-        const bet_amount: u64 = @intFromFloat(@ceil(@as(f32, @floatFromInt(ctx.money)) * ctx.bet_precentage));
+        const bet_amount: u64 = @intFromFloat(@ceil(@as(f32, @floatFromInt(ctx.money)) * ctx.bet_percentage));
         const bet_amount_text = std.fmt.bufPrintZ(&text_buffer, "Betting: ${d}.{d:02}", .{ bet_amount / 100, bet_amount % 100 }) catch unreachable;
         const bet_amount_text_width = raylib.measureText(bet_amount_text.ptr, 32);
         std.debug.assert(bet_amount_text_width >= 0);
