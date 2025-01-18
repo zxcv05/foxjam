@@ -26,6 +26,8 @@ last_coin: types.Coin = .{ .win = {} },
 money: u256 = constants.starting_money,
 bet_percentage: f32 = 0.5,
 effects: types.EffectList = .{},
+shop_items: [constants.max_shop_items]types.ShopItem = undefined,
+shop_refreshes: u16 = 0,
 
 pub fn serialize(this: *const Context, writer: std.io.AnyWriter) !void {
     try this.coin_deck.serialize(writer);
@@ -61,19 +63,16 @@ pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context 
 }
 
 pub fn init(alloc: std.mem.Allocator) !Context {
-    var coin_deck: types.CoinDeck = try .init(constants.initial_coins, alloc);
-    errdefer coin_deck.deinit(alloc);
-
-    try coin_deck.positive_deck.append(alloc, .{ .next_multiplier = 3 });
-    try coin_deck.positive_deck.append(alloc, .{ .next_value_multiplier = 3 });
-    try coin_deck.positive_deck.append(alloc, .{ .next_duration_multiplier = 3 });
-    try coin_deck.negative_deck.append(alloc, .{ .weighted_coin = 0.25 });
-    try coin_deck.negative_deck.append(alloc, .{ .lesser_loss = 0.75 });
-
-    return .{
-        .coin_deck = coin_deck,
+    var outp: Context = .{
         .allocator = alloc,
     };
+
+    outp.coin_deck = try .init(constants.initial_coins, alloc);
+    errdefer outp.coin_deck.deinit(alloc);
+
+    outp.refreshShop();
+
+    return outp;
 }
 
 pub fn deinit(this: *Context) void {
@@ -86,4 +85,153 @@ pub fn switch_driver(this: *Context, driver: *const State) !void {
     try driver.enter(this);
 
     this.driver = driver;
+}
+
+/// updates shop items
+pub fn refreshShop(ctx: *Context) void {
+    ctx.shop_refreshes += 1;
+    var rng_outer = std.Random.DefaultPrng.init(@truncate(@abs(std.time.microTimestamp())));
+    const rng = rng_outer.random();
+
+    const is_mid_game = countTrues(&[_]bool {
+        ctx.shop_refreshes >= 4,
+        ctx.coin_deck.flips >= 10,
+        ctx.money >= 50_00,
+    }) >= 2;
+    const is_end_game = countTrues(&[_]bool {
+        ctx.shop_refreshes >= 11,
+        ctx.coin_deck.flips >= 25,
+        ctx.money >= 250_00,
+    }) >= 2;
+    const is_legendary = countTrues(&[_]bool {
+        ctx.shop_refreshes >= 21,
+        ctx.coin_deck.flips >= 50,
+        ctx.money >= 1000_00,
+    }) >= 2;
+    _ = is_legendary;
+
+    const base_price: f32 = @floatFromInt(ctx.shop_refreshes * 5);
+
+    for (0..constants.max_shop_items) |i| {
+        const possible_items: ?[]const types.Coin = switch (i) {
+            0, 1 => // starting displays
+                if (is_mid_game) &(early_shop_items ++ mid_shop_items)
+                else             &early_shop_items,
+            2 => // mid game shop
+                if (!is_mid_game)     null
+                else if (is_end_game) &(mid_shop_items ++ end_shop_items)
+                else                  &mid_shop_items,
+            3 => // end game shop
+                if (!is_end_game) null
+                else              &end_shop_items,
+            else => unreachable,
+        };
+        if (possible_items) |items| {
+            const random_index = rng.uintLessThan(usize, items.len);
+            ctx.shop_items[i] = .{ .selling = .{
+                .coin = items[random_index],
+                .price = @intFromFloat(base_price * (rng.floatNorm(f32) * 0.1 + 1.0)),
+            }};
+        }
+        else
+            ctx.shop_items[i] = .{ .not_unlocked = {} };
+    }
+}
+const early_shop_items = [_]types.Coin {
+    .{ .win = {} },
+    .{ .win = {} },
+    .{ .win = {} },
+    .{ .win = {} },
+
+    .{ .additive_win = 1_75 },
+    .{ .additive_win = 2_00 },
+    .{ .additive_win = 2_00 },
+    .{ .additive_win = 2_25 },
+    .{ .additive_win = 2_50 },
+
+    .{ .lesser_loss = 0.80 },
+    .{ .lesser_loss = 0.75 },
+    .{ .lesser_loss = 0.75 },
+    .{ .lesser_loss = 0.70 },
+    .{ .lesser_loss = 0.60 },
+
+    .{ .weighted_coin = 0.15 },
+    .{ .next_multiplier = 2 },
+};
+const mid_shop_items = [_]types.Coin {
+    .{ .win = {} },
+    .{ .win = {} },
+    .{ .win = {} },
+    .{ .better_win = 1.0 },
+
+    .{ .additive_win = 10_00 },
+    .{ .additive_win = 12_50 },
+    .{ .additive_win = 12_50 },
+    .{ .additive_win = 15_00 },
+    .{ .additive_win = 15_00 },
+    .{ .additive_win = 20_00 },
+
+    .{ .next_multiplier = 2 },
+    .{ .next_multiplier = 2 },
+    .{ .next_multiplier = 3 },
+    .{ .next_multiplier = 4 },
+
+    .{ .next_value_multiplier = 2 },
+    .{ .next_value_multiplier = 2 },
+
+    .{ .next_duration_multiplier = 2 },
+    .{ .next_duration_multiplier = 2 },
+
+    .{ .weighted_coin = 0.30 },
+    .{ .weighted_coin = 0.30 },
+    .{ .weighted_coin = 0.40 },
+
+    .{ .lesser_loss = 0.50 },
+    .{ .lesser_loss = 0.45 },
+    .{ .lesser_loss = 0.45 },
+    .{ .lesser_loss = 0.40 },
+};
+const end_shop_items = [_]types.Coin {
+    .{ .better_win = 1.5 },
+    .{ .better_win = 2.0 },
+    .{ .better_win = 2.0 },
+    .{ .better_win = 2.5 },
+    .{ .better_win = 2.5 },
+    .{ .better_win = 3.0 },
+
+    .{ .next_multiplier =  6 },
+    .{ .next_multiplier =  8 },
+    .{ .next_multiplier =  8 },
+    .{ .next_multiplier = 10 },
+
+    .{ .next_value_multiplier = 3 },
+    .{ .next_value_multiplier = 3 },
+    .{ .next_value_multiplier = 4 },
+    .{ .next_value_multiplier = 4 },
+
+    .{ .next_duration_multiplier = 3 },
+    .{ .next_duration_multiplier = 3 },
+    .{ .next_duration_multiplier = 4 },
+    .{ .next_duration_multiplier = 4 },
+
+    .{ .weighted_coin = 0.50 },
+    .{ .weighted_coin = 0.75 },
+    .{ .weighted_coin = 0.75 },
+    .{ .weighted_coin = 0.90 },
+
+    .{ .lesser_loss = 0.25 },
+    .{ .lesser_loss = 0.25 },
+};
+const legendary_shop_items = [_]types.Coin {
+    .{ .better_win = 10.0 },
+    .{ .next_multiplier = 25 },
+    .{ .next_value_multiplier = 10 },
+    .{ .next_duration_multiplier = 10 },
+    .{ .weighted_coin = 1.0},
+    .{ .lesser_loss = 0.0},
+};
+fn countTrues(bools: []const bool) usize {
+    var count: usize = 0;
+    for (bools) |b| { if (b) count += 1; }
+    return count;
 }
