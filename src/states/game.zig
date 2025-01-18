@@ -83,8 +83,8 @@ pub fn update(ctx: *Context) !void {
         ); // rigged >:3
 
         switch (ctx.last_coin) { // TODO: add new effects here
-            .win             => ctx.money += bet_amount * ctx.effects.multiplier,
-            .loss            => ctx.money -= bet_amount,
+            .win             => ctx.money +|= bet_amount * ctx.effects.multiplier,
+            .loss            => ctx.money -|= bet_amount,
             .additive_win    => |val| ctx.money += val * ctx.effects.multiplier,
             .next_multiplier => |val| try ctx.effects.addEffect(.{
                 .coin     = .{ .next_multiplier = val * ctx.effects.value_multiplier},
@@ -161,13 +161,7 @@ pub fn render(ctx: *Context) !void {
         raylib.drawText(effect_text, 2, @intCast(2 + i * 14), 2, raylib.Color.white);
     }
     { // draw work dollar sign
-        raylib.drawText(
-            "$",
-            12 + 32 - @divTrunc(raylib.measureText("$", 32), 2),
-            constants.SIZE_HEIGHT - 12 - 46,
-            32,
-            raylib.Color.green
-        );
+        raylib.drawText("$", 12 + 32 - @divTrunc(raylib.measureText("$", 32), 2), constants.SIZE_HEIGHT - 12 - 46, 32, raylib.Color.green);
     }
 
     if (show_coin) {
