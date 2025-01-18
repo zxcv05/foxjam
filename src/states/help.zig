@@ -59,5 +59,7 @@ pub fn render(ctx: *Context) !void {
         \\
         \\ # In game
         \\ Space : Flip coin
+        \\ W: Go to work
+        \\ R: Refresh Shop
     , 20, 120, 24, text_color);
 }

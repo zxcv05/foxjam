@@ -108,11 +108,19 @@ pub fn refreshShop(ctx: *Context) void {
         ctx.coin_deck.flips >= 50,
         ctx.money >= 1000_00,
     }) >= 2;
-    _ = is_legendary;
 
     const base_price: f32 = @floatFromInt(ctx.shop_refreshes * 5);
 
     for (0..constants.max_shop_items) |i| {
+        if (is_legendary and rng.float(f32) < 0.1) {
+            const random_index = rng.uintLessThan(usize, legendary_shop_items.len);
+            ctx.shop_items[i] = .{ .selling = .{
+                .coin = legendary_shop_items[random_index],
+                .price = @intFromFloat(3 * base_price * std.math.clamp(rng.floatNorm(f32) * 0.2 + 1.0, 0.5, 2.0)),
+            }};
+            continue;
+        }
+
         const possible_items: ?[]const types.Coin = switch (i) {
             0, 1 => // starting displays
                 if (is_mid_game) &(early_shop_items ++ mid_shop_items)
@@ -130,7 +138,7 @@ pub fn refreshShop(ctx: *Context) void {
             const random_index = rng.uintLessThan(usize, items.len);
             ctx.shop_items[i] = .{ .selling = .{
                 .coin = items[random_index],
-                .price = @intFromFloat(base_price * (rng.floatNorm(f32) * 0.1 + 1.0)),
+                .price = @intFromFloat(base_price * std.math.clamp(rng.floatNorm(f32) * 0.1 + 1.0, 0.0, 2.0)),
             }};
         }
         else

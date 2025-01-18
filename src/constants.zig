@@ -11,5 +11,6 @@ pub const initial_coins = 5;
 
 pub const max_shop_items = 4;
 
+// v units are still cents / $0.01 v //
 pub const starting_money = 10_00;
-pub const work_money = 5_00;
+pub const work_money = 10;

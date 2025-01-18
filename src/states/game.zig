@@ -42,29 +42,41 @@ pub fn update(ctx: *Context) !void {
         try ctx.switch_driver(&State.states.PauseMenu);
     }
 
-    if (raylib.isKeyPressed(.r)) ctx.refreshShop();
-
     _ = raygui.guiSliderBar(.{
-        .x = @floatFromInt(constants.SIZE_WIDTH / 3),
-        .width = @floatFromInt(constants.SIZE_WIDTH / 3),
+        .x = 12 + 96 + 12 + 96 + 12,
+        .width = @floatFromInt(constants.SIZE_WIDTH - 2 * (12 + 96 + 12 + 96 + 12)),
         .y = 64,
         .height = 64,
     }, "", "", &ctx.bet_percentage, 0.0, 1.0);
 
-    const going_to_work = raygui.guiButton(.{
-        .x = 12,
-        .width = 64,
-        .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64),
-        .height = 64,
-    }, "") != 0;
+    const going_to_work =
+        raygui.guiButton(.{
+            .x = 12,
+            .width = 96 + 12 + 96,
+            .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64 - 12 - 64),
+            .height = 64,
+        }, "") != 0 or
+        raylib.isKeyPressed(.w);
     if (going_to_work) {
         ctx.money += constants.work_money;
     }
 
+    const refreshing_shop =
+        raygui.guiButton(.{
+            .x = @floatFromInt(constants.SIZE_WIDTH - 12 - 96 - 12 - 96),
+            .width = 96 + 12 + 96,
+            .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64 - 12 - 64),
+            .height = 64,
+        }, "refresh shop") != 0 or
+        raylib.isKeyPressed(.r);
+    if (refreshing_shop) {
+        ctx.refreshShop();
+    }
+
     const should_flip =
         raygui.guiButton(.{
-            .x = 12 + 64 + 12,
-            .width = @floatFromInt(constants.SIZE_WIDTH - 12 - 64 - 12 - 12),
+            .x = 12 ,
+            .width = @floatFromInt(constants.SIZE_WIDTH - 12 - 12),
             .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64),
             .height = 64,
         }, "") != 0 or
@@ -84,7 +96,7 @@ pub fn update(ctx: *Context) !void {
         switch (ctx.last_coin) { // TODO: add new effects here
             .win             => ctx.money +|= bet_amount * ctx.effects.multiplier,
             .loss            => ctx.money -|= bet_amount,
-            .additive_win    => |val| ctx.money += val * ctx.effects.multiplier,
+            .additive_win    => |val| ctx.money +|= val * ctx.effects.multiplier,
             .next_multiplier => |val| try ctx.effects.addEffect(.{
                 .coin     = .{ .next_multiplier = val * ctx.effects.value_multiplier},
                 .duration = 2 * ctx.effects.duration_multiplier,
@@ -97,12 +109,12 @@ pub fn update(ctx: *Context) !void {
                 .coin     = .{ .next_duration_multiplier = val * @as(u32, @intCast(ctx.effects.value_multiplier)) },
                 .duration = 2,
             }, ctx.allocator),
-            .lesser_loss   => |val| ctx.money -= @intFromFloat(@as(f32, @floatFromInt(bet_amount)) * val),
+            .lesser_loss   => |val| ctx.money -|= @intFromFloat(@as(f32, @floatFromInt(bet_amount)) * val),
             .weighted_coin => |val| try ctx.effects.addEffect(.{
                 .coin     = .{ .weighted_coin = val * @as(f32, @floatFromInt(ctx.effects.value_multiplier)) },
                 .duration = 3 * ctx.effects.duration_multiplier,
             }, ctx.allocator),
-            .better_win => |val| ctx.money += @intFromFloat(@as(f32, @floatFromInt(bet_amount * ctx.effects.multiplier)) * (1.0 + val)),
+            .better_win => |val| ctx.money +|= @intFromFloat(@as(f32, @floatFromInt(bet_amount * ctx.effects.multiplier)) * (1.0 + val)),
         }
 
         ctx.effects.update(ctx.allocator);
@@ -132,7 +144,7 @@ pub fn render(ctx: *Context) !void {
         std.debug.assert(coin_text_width >= 0);
         raylib.drawText(
             coin_text.ptr,
-            (constants.SIZE_WIDTH + 6 + 32 + 6) / 2 - @divTrunc(coin_text_width, 2),
+            constants.SIZE_WIDTH / 2 - @divTrunc(coin_text_width, 2),
             constants.SIZE_HEIGHT - 12 - 46,
             32,
             raylib.Color.black
@@ -211,7 +223,13 @@ pub fn render(ctx: *Context) !void {
         );
     }
     { // draw work dollar sign
-        raylib.drawText("$", 12 + 32 - @divTrunc(raylib.measureText("$", 32), 2), constants.SIZE_HEIGHT - 12 - 46, 32, raylib.Color.green);
+        raylib.drawText(
+            "go to work",
+            12 + 48 + 6 + 48 - @divTrunc(raylib.measureText("go to work", 32), 2),
+            constants.SIZE_HEIGHT - 12 - 64 - 12 - 46,
+            32,
+            raylib.Color.green
+        );
     }
 
     if (show_coin) {
