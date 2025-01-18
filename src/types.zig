@@ -28,15 +28,10 @@ pub const Coin = union(enum) {
     next_duration_multiplier: u32,
     /// you lose only value ([0,1]) of money
     lesser_loss: f32,
-    /// next 3 flips, youre value ([0,0.5]) less likely to get a negative coin
+    /// next 3 flips, youre value ([0,1]) less likely to get a negative coin
     weighted_coin: f32,
-
-    /// generates a random coin based on a rarity
-    pub fn randomFromRarity(rarity: u16, rng: std.Random) Coin {
-        _ = rarity;
-        _ = rng;
-        @panic("not implemented yet");
-    }
+    /// same as win, except it returns 100% + value of bet amount
+    better_win: f32,
 };
 
 /// the effect of a coin combined with a duration
@@ -180,6 +175,7 @@ pub const CoinDeck = struct {
 };
 
 pub const ShopItem = union (enum) {
+    not_unlocked: void,
     sold: void,
     selling: struct {
         coin: Coin,
