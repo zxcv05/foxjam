@@ -44,7 +44,7 @@ pub fn render(ctx: *Context) !void {
     if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 180 }, "Go back") > 0)
         try ctx.switch_driver(&State.states.Game);
 
-    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 250 }, "Controls") > 0)
+    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 250 }, "Help") > 0)
         try ctx.switch_driver(&State.states.Help);
 
     if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 320 }, "Exit") > 0)

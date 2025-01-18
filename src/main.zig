@@ -38,8 +38,8 @@ pub fn main() !void {
     try ctx.driver.enter(&ctx);
 
     while (ctx.running and !raylib.windowShouldClose()) {
-        if (raylib.isKeyPressed(.h)) try ctx.switch_driver(&State.states.Help);
-        if (raylib.isKeyPressed(.i)) try ctx.switch_driver(&State.states.Stats);
+        if (raylib.isKeyPressed(.h) and ctx.driver != &State.states.Help) try ctx.switch_driver(&State.states.Help);
+        if (raylib.isKeyPressed(.i) and ctx.driver != &State.states.Stats) try ctx.switch_driver(&State.states.Stats);
 
         try ctx.driver.update(&ctx);
 

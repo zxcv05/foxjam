@@ -15,6 +15,8 @@ pub const interface = State{
     .render = &render,
 };
 
+var just_entered: bool = false;
+
 pub fn init(ctx: *Context) !void {
     _ = ctx;
 }
@@ -25,6 +27,7 @@ pub fn deinit(ctx: *Context) void {
 
 pub fn enter(ctx: *Context) !void {
     _ = ctx;
+    just_entered = true;
 }
 
 pub fn leave(ctx: *Context) !void {
@@ -32,8 +35,10 @@ pub fn leave(ctx: *Context) !void {
 }
 
 pub fn update(ctx: *Context) !void {
-    if (raylib.isKeyPressed(.escape))
+    if (raylib.isKeyPressed(.escape) or (raylib.isKeyPressed(.h) and !just_entered))
         try ctx.switch_driver(&State.states.Game);
+
+    just_entered = false;
 }
 
 pub fn render(ctx: *Context) !void {
@@ -50,7 +55,7 @@ pub fn render(ctx: *Context) !void {
         \\ # Global
         \\ Escape : Pause menu or "go back"
         \\ H : Show Help
-        \\ I : Show Stats
+        \\ I : Show Deck
         \\
         \\ # In game
         \\ Space : Flip coin

@@ -16,6 +16,8 @@ pub const interface = State{
     .render = &render,
 };
 
+var just_entered: bool = false;
+
 var num_pos: usize = 0;
 var num_neg: usize = 0;
 
@@ -40,6 +42,8 @@ pub fn enter(ctx: *Context) !void {
         num_neg += 1;
         neg_coins.getPtrAssertContains(coin).* += 1;
     }
+
+    just_entered = true;
 }
 
 pub fn leave(ctx: *Context) !void {
@@ -57,8 +61,10 @@ pub fn leave(ctx: *Context) !void {
 }
 
 pub fn update(ctx: *Context) !void {
-    if (raylib.isKeyPressed(.escape))
+    if (raylib.isKeyPressed(.escape) or (raylib.isKeyPressed(.i) and !just_entered))
         try ctx.switch_driver(&State.states.Game);
+
+    just_entered = false;
 }
 
 pub fn render(ctx: *Context) !void {
@@ -68,7 +74,7 @@ pub fn render(ctx: *Context) !void {
     raylib.clearBackground(raylib.Color.black);
     const text_color = raylib.getColor(@bitCast(raygui.guiGetStyle(.default, raygui.GuiControlProperty.base_color_pressed)));
 
-    raylib.drawText("Stats", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Stats", 48), 2), 24, 48, text_color);
+    raylib.drawText("Deck", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Deck", 48), 2), 24, 48, text_color);
 
     const coins_y = 150;
 
@@ -96,7 +102,7 @@ pub fn render(ctx: *Context) !void {
         if (coin.value.* == 0) continue;
         defer neg_coin_index += 1;
 
-        const chance: f32 = @as(f32, @floatFromInt(coin.value.*)) / @as(f32, @floatFromInt(num_pos)) * 100;
+        const chance: f32 = @as(f32, @floatFromInt(coin.value.*)) / @as(f32, @floatFromInt(num_neg)) * 100;
         const text = std.fmt.bufPrintZ(buffer[0..], "- {s}: {d} ({d:.2}%)", .{ @tagName(coin.key), coin.value.*, chance }) catch unreachable;
         raylib.drawText(text, 15, spacing + coins_y + neg_coin_index * 20 + 30, 20, text_color);
     }
