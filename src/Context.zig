@@ -9,6 +9,7 @@ const constants = @import("constants.zig");
 const Settings = @import("Settings.zig");
 const State = @import("states/State.zig");
 const Serde = @import("serde.zig");
+const trophy = @import("trophy.zig");
 const types = @import("types.zig");
 
 const Context = @This();
@@ -19,15 +20,18 @@ allocator: std.mem.Allocator,
 driver: *const State = &State.states.Game,
 
 settings: Settings = .{},
+
 coin_deck: types.CoinDeck = undefined,
 last_coin: types.Coin = .{ .win = {} },
-/// unit: cent / $0.01
-/// may need to be increased if we get to over *a lot* money
 money: u256 = constants.starting_money,
+
 bet_percentage: f32 = 0.5,
 effects: types.EffectList = .{},
+
 shop_items: [constants.max_shop_items]types.ShopItem = undefined,
 shop_refreshes: u16 = 0,
+
+trophy_case: trophy.Case = .{},
 
 pub fn serialize(this: *const Context, writer: std.io.AnyWriter) !void {
     try this.settings.serialize(writer);
@@ -40,6 +44,8 @@ pub fn serialize(this: *const Context, writer: std.io.AnyWriter) !void {
     try writer.writeInt(u16, this.shop_refreshes, .big);
     try writer.writeInt(usize, this.shop_items.len, .big);
     _ = try writer.writeAll(std.mem.sliceAsBytes(this.shop_items[0..]));
+
+    try this.trophy_case.serialize(writer);
 }
 
 pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context {
@@ -66,6 +72,11 @@ pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context 
     var shop_items: [constants.max_shop_items]types.ShopItem = undefined;
     _ = try reader.readAll(std.mem.sliceAsBytes(shop_items[0..]));
 
+    const trophy_case = trophy.Case.deserialize(alloc, reader) catch |e| default: {
+        std.log.err("error deserializing trophies: {s}", .{@errorName(e)});
+        break :default trophy.Case{};
+    };
+
     return .{
         .allocator = alloc,
         .settings = settings,
@@ -76,6 +87,7 @@ pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context 
         .effects = effects,
         .shop_refreshes = shop_refreshes,
         .shop_items = shop_items,
+        .trophy_case = trophy_case,
     };
 }
 

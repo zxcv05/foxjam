@@ -20,8 +20,10 @@ pub const interface = State{
 
 var show_coin: bool = false;
 var coin_anim: Animation = .init(8, 32.0);
+var rng: std.Random.DefaultPrng = undefined;
 
 pub fn init(ctx: *Context) !void {
+    rng = .init(@bitCast(std.time.microTimestamp()));
     _ = ctx;
 }
 
@@ -38,9 +40,8 @@ pub fn leave(ctx: *Context) !void {
 }
 
 pub fn update(ctx: *Context) !void {
-    if (raylib.isKeyPressed(.escape)) {
+    if (raylib.isKeyPressed(.escape))
         try ctx.switch_driver(&State.states.PauseMenu);
-    }
 
     _ = raygui.guiSliderBar(.{
         .x = 12 + 96 + 12 + 96 + 12,
@@ -48,6 +49,12 @@ pub fn update(ctx: *Context) !void {
         .y = constants.SIZE_HEIGHT - 12 - 64 - 12 - 64,
         .height = 64,
     }, "", "", &ctx.bet_percentage, 0.0, 1.0);
+
+    if (raylib.isKeyPressed(.left)) ctx.bet_percentage -= 0.05;
+    if (raylib.isKeyPressed(.right)) ctx.bet_percentage += 0.05;
+
+    // This makes the slider do steps of 0.05
+    ctx.bet_percentage = std.math.clamp(@round(ctx.bet_percentage * 20) / 20, 0.0, 1.0);
 
     const going_to_work =
         raygui.guiButton(.{
@@ -58,7 +65,7 @@ pub fn update(ctx: *Context) !void {
         }, "Go to work") != 0 or raylib.isKeyPressed(.w);
 
     if (going_to_work) {
-        ctx.money += constants.work_money;
+        ctx.money += rng.random().intRangeAtMost(u256, constants.work_money_min, constants.work_money_max);
 
         // TODO: Should this be click or coin?
         ctx.assets.play_sound("coin");
@@ -244,11 +251,11 @@ pub fn render(ctx: *Context) !void {
         const texture = textures[coin_anim.frame_index];
         texture.drawEx(
             .{
-                .x = constants.SIZE_WIDTH / 2 - @as(f32, @floatFromInt(texture.width)) * 0.75,
-                .y = constants.SIZE_HEIGHT / 2 - @as(f32, @floatFromInt(texture.height)) * 0.75 - 80,
+                .x = constants.SIZE_WIDTH / 2 - @as(f32, @floatFromInt(texture.width)),
+                .y = constants.SIZE_HEIGHT / 2 - @as(f32, @floatFromInt(texture.height)) - 60,
             },
             0.0,
-            1.5,
+            2.0,
             raylib.Color.white,
         );
     }

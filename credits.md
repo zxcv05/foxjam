@@ -21,3 +21,7 @@
 - `coin_0*.png` by `Puddin`
   - https://opengameart.org/content/rotating-coin
   - CC0
+
+- `fox_*.png` by `dragin_fire`
+  - @dragin_fire on discord
+  - TODO

@@ -20,6 +20,23 @@ coin_06: raylib.Texture2D = undefined,
 coin_07: raylib.Texture2D = undefined,
 coin_08: raylib.Texture2D = undefined,
 
+fox_8bit: raylib.Texture2D = undefined,
+fox_bat: raylib.Texture2D = undefined,
+fox_black: raylib.Texture2D = undefined,
+fox_corsac: raylib.Texture2D = undefined,
+fox_fennec: raylib.Texture2D = undefined,
+fox_fire: raylib.Texture2D = undefined,
+fox_orange: raylib.Texture2D = undefined,
+fox_robin: raylib.Texture2D = undefined,
+fox_tibetan: raylib.Texture2D = undefined,
+fox_white: raylib.Texture2D = undefined,
+// fox_placeholder: raylib.Texture2D = undefined,
+// fox_placeholder: raylib.Texture2D = undefined,
+// fox_placeholder: raylib.Texture2D = undefined,
+// fox_placeholder: raylib.Texture2D = undefined,
+// fox_placeholder: raylib.Texture2D = undefined,
+// fox_placeholder: raylib.Texture2D = undefined,
+
 /// loads all the assets in place
 pub fn init(this: *Assets) !void {
     if (constants.is_web) return try this.init_emscripten();

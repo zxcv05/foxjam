@@ -10,6 +10,7 @@ pub const states = struct {
     pub const PauseMenu = @import("pause_menu.zig").interface;
     pub const Help      = @import("help.zig").interface;
     pub const Stats     = @import("stats.zig").interface;
+    pub const Trophies  = @import("trophies.zig").interface;
     // zig fmt: on
 
     pub fn init(ctx: *Context) !void {

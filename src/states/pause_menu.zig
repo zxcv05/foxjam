@@ -54,12 +54,12 @@ pub fn render(ctx: *Context) !void {
     if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH - 45, .y = 10, .width = 35, .height = 35 }, if (ctx.settings.audio_muted) "#132#" else "#122#") > 0)
         ctx.settings.audio_muted = !ctx.settings.audio_muted;
 
-    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 180 }, "Go back") > 0)
+    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 240 }, "Go back") > 0)
         try ctx.switch_driver(&State.states.Game);
 
-    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 250 }, "Help") > 0)
+    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 310 }, "Help") > 0)
         try ctx.switch_driver(&State.states.Help);
 
-    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 320 }, "Exit") > 0)
+    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 380 }, "Exit") > 0)
         ctx.running = false;
 }
