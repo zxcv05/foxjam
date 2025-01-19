@@ -15,6 +15,8 @@ pub const interface = State{
     .render = &render,
 };
 
+var just_entered: bool = true;
+
 pub fn init(ctx: *Context) !void {
     _ = ctx;
 }
@@ -25,6 +27,7 @@ pub fn deinit(ctx: *Context) void {
 
 pub fn enter(ctx: *Context) !void {
     _ = ctx;
+    just_entered = true;
 }
 
 pub fn leave(ctx: *Context) !void {
@@ -51,7 +54,7 @@ pub fn render(ctx: *Context) !void {
         ctx.assets = assets;
     }
 
-    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH - 12 - 32, .y = 12, .width = 32, .height = 32 }, if (ctx.settings.audio_muted) "#132#" else "#122#") > 0)
+    if (!just_entered and raygui.guiButton(.{ .x = constants.SIZE_WIDTH - 12 - 32, .y = 12, .width = 32, .height = 32 }, if (ctx.settings.audio_muted) "#132#" else "#122#") > 0)
         ctx.settings.audio_muted = !ctx.settings.audio_muted;
 
     if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 240 }, "Go back") > 0)
@@ -62,4 +65,6 @@ pub fn render(ctx: *Context) !void {
 
     if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 380 }, "Exit") > 0)
         ctx.running = false;
+
+    just_entered = false;
 }

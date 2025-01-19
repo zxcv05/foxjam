@@ -274,7 +274,7 @@ pub const CoinDeck = struct {
         const deck = if (positive) self.positive_deck else self.negative_deck;
 
         // todo: is this the right place for this?
-        if (positive) ctx.assets.play_sound("coin") else ctx.assets.play_sound("coin_bad");
+        if (positive) ctx.assets.play_sound("coin2") else ctx.assets.play_sound("coin_bad");
 
         // get random coin from deck
         const random_index = rand.uintLessThan(usize, deck.items.len);

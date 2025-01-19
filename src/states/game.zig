@@ -106,7 +106,7 @@ pub fn update(ctx: *Context) !void {
 
         // TODO: Should this be click or coin?
         // definitely coin, ure getting cash after all
-        ctx.assets.play_sound("coin");
+        ctx.assets.play_sound("coin2");
     }
 
     { // shop stuff
@@ -126,7 +126,7 @@ pub fn update(ctx: *Context) !void {
             if (ctx.money >= 10_00) {
                 defer ctx.money -= 10_00;
                 ctx.refreshShop();
-                ctx.assets.play_sound("click");
+                ctx.assets.play_sound("click2");
             } else ctx.assets.play_sound("click_bad");
         }
 
@@ -164,7 +164,7 @@ pub fn update(ctx: *Context) !void {
                     ctx.assets.play_sound("click_bad");
                     continue :display_loop;
                 }
-                ctx.assets.play_sound("coin");
+                ctx.assets.play_sound("coin2");
                 ctx.money -= ctx.shop_items[display_num].selling.price;
                 switch (ctx.shop_items[display_num].selling.coin) {
                     .win, .additive_win, .better_win, .next_duration_multiplier, .next_multiplier, .next_value_multiplier => try ctx.coin_deck.positive_deck.append(ctx.allocator, ctx.shop_items[display_num].selling.coin),
