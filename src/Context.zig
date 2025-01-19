@@ -105,6 +105,8 @@ pub fn init(alloc: std.mem.Allocator) !Context {
 
     outp.refreshShop();
 
+    outp.trophy_case.displays.put(.red, true);
+
     return outp;
 }
 

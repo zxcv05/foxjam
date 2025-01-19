@@ -40,9 +40,6 @@ pub fn main() !void {
 
     defer ctx.save() catch |e| std.log.err("Failed to save game: {s}", .{@errorName(e)});
 
-    // freebie
-    trophy.unlock(&ctx, .red);
-
     try ctx.driver.enter(&ctx);
 
     while (ctx.running and !raylib.windowShouldClose()) {
