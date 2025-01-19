@@ -135,6 +135,15 @@ fn process_trophy(ctx: *Context, comptime fox: trophy.Trophy.Tag, x: comptime_in
         mouse_y >= stand_y and mouse_y <= stand_y + stand_height)
         tooltip.* = .{ .name = fox };
 
+    if (fox == .unfinished) {
+        if ((mouse_x >= x and mouse_x <= x + constants.fox_texture_width and
+             mouse_y >= y and mouse_y <= y + constants.fox_texture_height) or
+            (mouse_x >= stand_x and mouse_x <= stand_x + stand_width and
+             mouse_y >= stand_y and mouse_y <= stand_y + stand_height)) {
+            trophy.unlock_if(ctx, .unfinished, raylib.isMouseButtonPressed(.left));
+        }
+    }
+
     raylib.drawTexture(texture, x, y, tint);
     raylib.drawTexture(ctx.assets.fox_stand, stand_x, stand_y, raylib.Color.white);
 }

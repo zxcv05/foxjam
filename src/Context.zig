@@ -34,6 +34,7 @@ shop_refreshes: u16 = 0,
 trophy_case: trophy.Case = .{},
 
 losses_in_a_row: u16 = 0,
+wins_in_a_row: u16 = 0,
 
 pub fn serialize(this: *const Context, writer: std.io.AnyWriter) !void {
     try this.settings.serialize(writer);

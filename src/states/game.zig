@@ -229,9 +229,11 @@ pub fn update(ctx: *Context) !void {
         }
 
         trophy.unlock_if(ctx, .arctic, ctx.money == 0);
-        trophy.unlock_if(ctx, .sand, ctx.money >= 50_000_00);
+        trophy.unlock_if(ctx, .sand, ctx.money >= 1_000_000_00);
         trophy.unlock_if(ctx, .@"8bit", ctx.coin_deck.flips >= 100);
         trophy.unlock_if(ctx, .real, ctx.coin_deck.flips >= 500);
+        trophy.unlock_if(ctx, .news, ctx.losses_in_a_row >= 6);
+        trophy.unlock_if(ctx, .dog, ctx.wins_in_a_row >= 7);
         ctx.effects.update(ctx.allocator);
     }
 

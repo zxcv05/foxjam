@@ -269,6 +269,8 @@ pub const CoinDeck = struct {
 
         // get deck
         const positive = rand.float(f32) < ctx.positive_chance();
+        ctx.wins_in_a_row =
+            if (positive) ctx.wins_in_a_row + 1 else 0;
         ctx.losses_in_a_row =
             if (positive) 0 else ctx.losses_in_a_row + 1;
         const deck = if (positive) self.positive_deck else self.negative_deck;
