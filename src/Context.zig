@@ -31,6 +31,8 @@ effects: types.EffectList = .{},
 shop_items: [constants.max_shop_items]types.ShopItem = undefined,
 shop_refreshes: u16 = 0,
 
+times_worked: u16 = 0,
+
 trophy_case: trophy.Case = .{},
 
 losses_in_a_row: u16 = 0,
@@ -47,6 +49,7 @@ pub fn serialize(this: *const Context, writer: std.io.AnyWriter) !void {
     try writer.writeInt(u16, this.shop_refreshes, .big);
     try writer.writeInt(usize, this.shop_items.len, .big);
     _ = try writer.writeAll(std.mem.sliceAsBytes(this.shop_items[0..]));
+    try writer.writeInt(u16, this.times_worked, .big);
 
     try this.trophy_case.serialize(writer);
 }
@@ -77,6 +80,8 @@ pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context 
     var shop_items: [constants.max_shop_items]types.ShopItem = undefined;
     _ = try reader.readAll(std.mem.sliceAsBytes(shop_items[0..]));
 
+    const times_worked = try reader.readInt(u16, .big);
+
     const trophy_case = trophy.Case.deserialize(alloc, reader) catch |e| default: {
         std.log.err("error deserializing trophies: {s}", .{@errorName(e)});
         break :default trophy.Case{};
@@ -93,6 +98,7 @@ pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context 
         .shop_refreshes = shop_refreshes,
         .shop_items = shop_items,
         .trophy_case = trophy_case,
+        .times_worked = times_worked,
     };
 }
 
@@ -194,7 +200,7 @@ pub fn refreshShop(ctx: *Context) void {
     const is_legendary = countTrues(&[_]bool{
         ctx.shop_refreshes >= 21,
         ctx.coin_deck.flips >= 500,
-        ctx.money >= 1000_00,
+        ctx.money >= 1_000_00,
     }) >= 2;
     trophy.unlock_if(ctx, .fire, is_legendary);
 
@@ -317,7 +323,7 @@ const end_shop_items = [_]types.Coin{
     .{ .lesser_loss = 0.25 },
 };
 const legendary_shop_items = [_]types.Coin{
-    .{ .better_win = 10.0 },
+    .{ .better_win = 9.0 },
     .{ .next_multiplier = 25 },
     .{ .next_value_multiplier = 10 },
     .{ .next_duration_multiplier = 10 },

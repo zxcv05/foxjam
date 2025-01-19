@@ -45,9 +45,9 @@ pub const Coin = union(enum) {
             .next_multiplier => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: x{d}", .{ 2 * duration_multiplier, val * value_multiplier }),
             .next_value_multiplier => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: effects x{d}", .{ 3 * duration_multiplier, val }),
             .next_duration_multiplier => |val| try std.fmt.bufPrintZ(buffer, "Next 2: duration x{d}", .{val * @as(u32, @intCast(value_multiplier))}),
-            .lesser_loss => |val| try std.fmt.bufPrintZ(buffer, "{d}% tails", .{@as(u8, @intFromFloat(val * 100.0))}),
-            .weighted_coin => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: {d}% less negative", .{ 3 * duration_multiplier, @as(u8, @intFromFloat(val * 100.0 * @as(f32, @floatFromInt(value_multiplier)))) }),
-            .better_win => |val| try std.fmt.bufPrintZ(buffer, "{d}% heads", .{100 + @as(u16, @intFromFloat(val * 100.0))}),
+            .lesser_loss => |val| try std.fmt.bufPrintZ(buffer, "{d}% tails", .{@as(u64, @intFromFloat(val * 100.0))}),
+            .weighted_coin => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: {d}% less negative", .{ 3 * duration_multiplier, @as(u64, @intFromFloat(val * 100.0 * @as(f32, @floatFromInt(value_multiplier)))) }),
+            .better_win => |val| try std.fmt.bufPrintZ(buffer, "{d}% heads", .{100 + @as(u64, @intFromFloat(val * 100.0))}),
         };
     }
 };

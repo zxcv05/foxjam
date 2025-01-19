@@ -109,6 +109,8 @@ pub fn update(ctx: *Context) !void {
     if (going_to_work) {
         ctx.money += rng.random().intRangeAtMost(u256, constants.work_money_min, constants.work_money_max);
         ctx.assets.play_sound("coin1");
+        ctx.times_worked += 1;
+        trophy.unlock_if(ctx, .black, ctx.times_worked >= 24);
     }
 
     { // shop stuff
@@ -117,7 +119,7 @@ pub fn update(ctx: *Context) !void {
 
         var text_buffer: [256]u8 = undefined;
 
-        const refresh_price: u256 = 10_00 + (ctx.shop_refreshes - 1) * 5_00;
+        const refresh_price: u256 = 10_00 + @as(u256, ctx.shop_refreshes -| 1) * 5_00;
         const refresh_text = std.fmt.bufPrintZ(&text_buffer, "Refresh shop: ${d}.{d:02}", .{refresh_price / 100, refresh_price % 100}) catch |err| switch (err) {
             std.fmt.BufPrintError.NoSpaceLeft => unreachable,
             else => return err,
@@ -184,6 +186,7 @@ pub fn update(ctx: *Context) !void {
                 ctx.shop_items[display_num] = .{ .sold = {} };
                 trophy.unlock_if(ctx, .robin, ctx.coin_deck.positive_deck.items.len >= 15);
                 trophy.unlock_if(ctx, .bat, ctx.coin_deck.negative_deck.items.len >= 15);
+                trophy.unlock_if(ctx, .corsac, ctx.coin_deck.negative_deck.items.len + ctx.coin_deck.positive_deck.items.len >= 50);
             }
         }
     }
@@ -234,6 +237,7 @@ pub fn update(ctx: *Context) !void {
         trophy.unlock_if(ctx, .real, ctx.coin_deck.flips >= 500);
         trophy.unlock_if(ctx, .news, ctx.losses_in_a_row >= 6);
         trophy.unlock_if(ctx, .dog, ctx.wins_in_a_row >= 7);
+        trophy.unlock_if(ctx, .fennec, ctx.effects.effects.len >= 4);
         ctx.effects.update(ctx.allocator);
     }
 
@@ -273,7 +277,7 @@ pub fn render(ctx: *Context) !void {
         );
     }
     { // draw bet amount
-        const bet_amount: u64 = @intFromFloat(@ceil(@as(f32, @floatFromInt(ctx.money)) * ctx.bet_percentage));
+        const bet_amount: u256 = @intFromFloat(@ceil(@as(f32, @floatFromInt(ctx.money)) * ctx.bet_percentage));
         const bet_amount_text = std.fmt.bufPrintZ(&text_buffer, "Betting: ${d}.{d:02}", .{ bet_amount / 100, bet_amount % 100 }) catch unreachable;
         const bet_amount_text_width = raylib.measureText(bet_amount_text.ptr, 30);
         std.debug.assert(bet_amount_text_width >= 0);
@@ -301,7 +305,7 @@ pub fn render(ctx: *Context) !void {
             .next_multiplier => |val| std.fmt.bufPrintZ(&text_buffer, "{d}x multiplier", .{val}) catch unreachable,
             .next_value_multiplier => |val| std.fmt.bufPrintZ(&text_buffer, "Effects {d}x stronger", .{val}) catch unreachable,
             .next_duration_multiplier => |val| std.fmt.bufPrintZ(&text_buffer, "Effects {d}x longer", .{val}) catch unreachable,
-            .weighted_coin => |val| std.fmt.bufPrintZ(&text_buffer, "{d}% less likely to get bad coin", .{@as(u8, @intFromFloat(val * 100.0))}) catch unreachable,
+            .weighted_coin => |val| std.fmt.bufPrintZ(&text_buffer, "{d}% less likely to get bad coin", .{@as(u64, @intFromFloat(val * 100.0))}) catch unreachable,
             else => unreachable,
         };
         raylib.drawText(

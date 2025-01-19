@@ -30,6 +30,7 @@ pub fn deinit(ctx: *Context) void {
 pub fn enter(ctx: *Context) !void {
     just_entered = true;
     show_golden = has_all_trophies(ctx);
+    trophy.unlock_if(ctx, .golden, show_golden);
 }
 
 pub fn leave(ctx: *Context) !void {
