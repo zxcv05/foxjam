@@ -187,14 +187,15 @@ pub fn refreshShop(ctx: *Context) void {
     }) >= 2;
     const is_end_game = countTrues(&[_]bool{
         ctx.shop_refreshes >= 11,
-        ctx.coin_deck.flips >= 25,
+        ctx.coin_deck.flips >= 100,
         ctx.money >= 250_00,
     }) >= 2;
     const is_legendary = countTrues(&[_]bool{
         ctx.shop_refreshes >= 21,
-        ctx.coin_deck.flips >= 50,
+        ctx.coin_deck.flips >= 500,
         ctx.money >= 1000_00,
     }) >= 2;
+    trophy.unlock_if(ctx, .fire, is_legendary);
 
     const base_price: f32 = @floatFromInt(@as(u256, ctx.shop_refreshes) * 1_50);
 

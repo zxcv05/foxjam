@@ -165,11 +165,13 @@ pub fn update(ctx: *Context) !void {
             if (buying_item) {
                 if (ctx.shop_items[display_num] == .not_unlocked or ctx.shop_items[display_num] == .sold) {
                     ctx.assets.play_sound("click2");
+                    trophy.unlock_if(ctx, .umbryan, true);
                     continue :display_loop;
                 }
                 // we know its selling
                 if (ctx.money < ctx.shop_items[display_num].selling.price) {
                     ctx.assets.play_sound("click2");
+                    trophy.unlock_if(ctx, .umbryan, true);
                     continue :display_loop;
                 }
                 ctx.assets.play_sound("click1");
