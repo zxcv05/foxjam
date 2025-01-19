@@ -41,7 +41,7 @@ pub fn render(ctx: *Context) !void {
 
     raylib.drawText("Paused", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Paused", 48), 2), 24, 48, text_color);
 
-    if (raygui.guiButton(.{ .x = 10, .y = 10, .width = 100, .height = 50 }, "Reset") > 0) {
+    if (raygui.guiButton(.{ .x = 12, .y = 12, .width = 100, .height = 50 }, "Reset") > 0) {
         const allocator = ctx.allocator;
         const assets = ctx.assets;
 
@@ -51,7 +51,7 @@ pub fn render(ctx: *Context) !void {
         ctx.assets = assets;
     }
 
-    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH - 45, .y = 10, .width = 35, .height = 35 }, if (ctx.settings.audio_muted) "#132#" else "#122#") > 0)
+    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH - 47, .y = 12, .width = 35, .height = 35 }, if (ctx.settings.audio_muted) "#132#" else "#122#") > 0)
         ctx.settings.audio_muted = !ctx.settings.audio_muted;
 
     if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 240 }, "Go back") > 0)

@@ -242,13 +242,19 @@ pub fn render(ctx: *Context) !void {
             .weighted_coin => |val| std.fmt.bufPrintZ(&text_buffer, "{d}% less likely to get bad coin", .{@as(u8, @intFromFloat(val * 100.0))}) catch unreachable,
             else => unreachable,
         };
-        raylib.drawText(
-            effect_text,
-            2,
-            @intCast(2 + i * 14),
-            2,
-            raylib.Color.white
-        );
+        _ = raygui.guiTextBox(.{
+            .x = 12,
+            .width = 96 + 12 + 96,
+            .y = @floatFromInt(12 + i * (64 + 12)),
+            .height = 64,
+        }, effect_text, 256, false);
+//        raylib.drawText(
+//            effect_text,
+//            2,
+//            @intCast(2 + i * 14),
+//            2,
+//            raylib.Color.white
+//        );
     }
 
     if (show_coin) {
