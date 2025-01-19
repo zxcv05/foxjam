@@ -6,6 +6,7 @@ const constants = @import("constants.zig");
 const Context = @import("Context.zig");
 const State = @import("states/State.zig");
 const serde = @import("serde.zig");
+const trophy = @import("trophy.zig");
 
 var outer = std.heap.GeneralPurposeAllocator(.{}).init;
 var alloc = outer.allocator();
@@ -39,6 +40,9 @@ pub fn main() !void {
 
     defer ctx.save() catch |e| std.log.err("Failed to save game: {s}", .{@errorName(e)});
 
+    // freebie
+    trophy.unlock(&ctx, .red);
+
     try ctx.driver.enter(&ctx);
 
     while (ctx.running and !raylib.windowShouldClose()) {
@@ -53,6 +57,24 @@ pub fn main() !void {
 
         try ctx.driver.update(&ctx);
         try ctx.driver.render(&ctx);
+
+        if (ctx.trophy_case.new_unlock) |fox| {
+            var buffer: [64]u8 = undefined;
+            const text = std.fmt.bufPrintZ(buffer[0..], "New trophy unlocked: {s} fox", .{@tagName(fox)}) catch unreachable;
+
+            const width: f32 = @floatFromInt(raylib.measureText(text, 24));
+            const bounds: raylib.Rectangle = .{
+                .x = 24,
+                .y = 60,
+                .width = width + 24,
+                .height = 40,
+            };
+
+            raylib.drawRectangleRounded(bounds, 0.25, 4, raylib.Color.black);
+            raylib.drawText(text, @intFromFloat(bounds.x + 12), @intFromFloat(bounds.y + 8), 24, raylib.Color.white);
+
+            if (std.time.milliTimestamp() >= ctx.trophy_case.new_unlock_ts) ctx.trophy_case.new_unlock = null;
+        }
     }
 }
 

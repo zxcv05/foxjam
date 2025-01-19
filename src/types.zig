@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const Context = @import("Context.zig");
+const trophy = @import("trophy.zig");
 
 /// the state of a flipped coin
 /// later one, there will also be stuff like
@@ -38,15 +39,15 @@ pub const Coin = union(enum) {
     // putting this here for less code duplication
     pub fn toString(self: Coin, buffer: []u8, duration_multiplier: u32, value_multiplier: u256) ![:0]const u8 {
         return switch (self) { // TODO: add new effects here
-            .win                      => try std.fmt.bufPrintZ(buffer, "Heads", .{}),
-            .loss                     => try std.fmt.bufPrintZ(buffer, "Tails", .{}),
-            .additive_win             => |val| try std.fmt.bufPrintZ(buffer, "+ ${d}.{d:02}", .{val / 100, val % 100}),
-            .next_multiplier          => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: x{d}", .{2 * duration_multiplier, val * value_multiplier}),
-            .next_value_multiplier    => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: effects x{d}", .{3 * duration_multiplier, val}),
+            .win => try std.fmt.bufPrintZ(buffer, "Heads", .{}),
+            .loss => try std.fmt.bufPrintZ(buffer, "Tails", .{}),
+            .additive_win => |val| try std.fmt.bufPrintZ(buffer, "+ ${d}.{d:02}", .{ val / 100, val % 100 }),
+            .next_multiplier => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: x{d}", .{ 2 * duration_multiplier, val * value_multiplier }),
+            .next_value_multiplier => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: effects x{d}", .{ 3 * duration_multiplier, val }),
             .next_duration_multiplier => |val| try std.fmt.bufPrintZ(buffer, "Next 2: duration x{d}", .{val * @as(u32, @intCast(value_multiplier))}),
-            .lesser_loss              => |val| try std.fmt.bufPrintZ(buffer, "{d}% tails", .{@as(u8, @intFromFloat(val * 100.0))}),
-            .weighted_coin            => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: {d}% less negative", .{3 * duration_multiplier, @as(u8, @intFromFloat(val * 100.0 * @as(f32, @floatFromInt(value_multiplier))))}),
-            .better_win               => |val| try std.fmt.bufPrintZ(buffer, "{d}% heads", .{100 + @as(u16, @intFromFloat(val * 100.0))}),
+            .lesser_loss => |val| try std.fmt.bufPrintZ(buffer, "{d}% tails", .{@as(u8, @intFromFloat(val * 100.0))}),
+            .weighted_coin => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: {d}% less negative", .{ 3 * duration_multiplier, @as(u8, @intFromFloat(val * 100.0 * @as(f32, @floatFromInt(value_multiplier)))) }),
+            .better_win => |val| try std.fmt.bufPrintZ(buffer, "{d}% heads", .{100 + @as(u16, @intFromFloat(val * 100.0))}),
         };
     }
 };
@@ -262,19 +263,18 @@ pub const CoinDeck = struct {
     /// positive chance is the chance to get one from the positive deck, otherwise you'll get a negative coin
     pub fn flip(self: *CoinDeck) Coin {
         const ctx: *Context = @alignCast(@fieldParentPtr("coin_deck", self)); // hehe :3
-                                                                              // i assume well keep this open source, god people might hate this
-                                                                              // dont listen to the haters tho, i love it :3
+        // i assume well keep this open source, god people might hate this
+        // dont listen to the haters tho, i love it :3
         const rand = self.rng.random();
 
         // get deck
         const positive = rand.float(f32) < ctx.positive_chance();
         ctx.losses_in_a_row =
-            if (positive) 0
-            else          ctx.losses_in_a_row + 1;
+            if (positive) 0 else ctx.losses_in_a_row + 1;
         const deck = if (positive) self.positive_deck else self.negative_deck;
 
         // todo: is this the right place for this?
-        if (positive) ctx.assets.play_sound("coin2") else ctx.assets.play_sound("coin_bad");
+        if (positive) ctx.assets.play_sound("coin1") else ctx.assets.play_sound("coin2");
 
         // get random coin from deck
         const random_index = rand.uintLessThan(usize, deck.items.len);

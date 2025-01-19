@@ -6,10 +6,10 @@ const constants = @import("constants.zig");
 
 const Assets = @This();
 
+coin1: raylib.Sound = undefined,
 coin2: raylib.Sound = undefined,
+click1: raylib.Sound = undefined,
 click2: raylib.Sound = undefined,
-coin_bad: raylib.Sound = undefined,
-click_bad: raylib.Sound = undefined,
 
 background: raylib.Texture2D = undefined,
 

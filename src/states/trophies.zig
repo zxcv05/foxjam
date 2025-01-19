@@ -39,11 +39,11 @@ pub fn leave(ctx: *Context) !void {
 pub fn update(ctx: *Context) !void {
     const go_back =
         raygui.guiButton(.{
-            .x = constants.SIZE_WIDTH - 12 - 32,
-            .width = 32,
-            .y = 12,
-            .height = 32,
-        }, "#118#") != 0 or raylib.isKeyPressed(.escape) or (raylib.isKeyPressed(.t) and !just_entered);
+        .x = constants.SIZE_WIDTH - 12 - 32,
+        .width = 32,
+        .y = 12,
+        .height = 32,
+    }, "#118#") != 0 or raylib.isKeyPressed(.escape) or (raylib.isKeyPressed(.t) and !just_entered);
     if (go_back)
         try ctx.switch_driver(&State.states.Game);
 

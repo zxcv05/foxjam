@@ -1,16 +1,16 @@
-- `click.wav` by `stijn`
+- `click1.wav` by `stijn`
   - https://freesound.org/s/43687/
   - CC0
 
-- `click_bad.wav` by `Mobeyee Sounds`
+- `click2.wav` by `Mobeyee Sounds`
   - https://opengameart.org/content/metal-click
   - CC-BY 4.0
 
-- `coin.wav` by `Fupi`
+- `coin1.wav` by `Fupi`
   - https://opengameart.org/content/plingy-coin
   - CC0
 
-- `coin_bad.wav` by `DavidW`
+- `coin2.wav` by `DavidW`
   - https://opengameart.org/content/wrong-choice-caught
   - CC-BY 3.0, OGA-BY 3.0, OGA-BY, CC-BY 4.0
 

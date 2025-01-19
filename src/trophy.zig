@@ -2,6 +2,7 @@ const std = @import("std");
 const raylib = @import("raylib");
 
 const Context = @import("Context.zig");
+const constants = @import("constants.zig");
 
 /// All trophies will have an effect associated with them, thats TODO
 pub const Trophy = union(enum) {
@@ -28,6 +29,8 @@ pub const Trophy = union(enum) {
 
 pub const Case = struct {
     displays: std.EnumMap(Trophy.Tag, bool) = .initFull(false),
+    new_unlock: ?Trophy.Tag = null,
+    new_unlock_ts: i64 = 0,
 
     const packed_display = packed struct(u8) {
         enabled: u1,
@@ -90,4 +93,19 @@ pub inline fn get_description_for(fox: Trophy.Tag) [*:0]const u8 {
         .umbryan => "Legally distinct for copyright reasons.",
         .unfinished => "The artist didn't finish this one... Oh well.",
     };
+}
+
+pub inline fn unlock_if(ctx: *Context, comptime fox: Trophy.Tag, cond: bool) void {
+    if (cond and !is_unlocked(ctx, fox)) unlock(ctx, fox);
+}
+
+pub fn unlock(ctx: *Context, comptime fox: Trophy.Tag) void {
+    ctx.trophy_case.displays.put(fox, true);
+
+    ctx.trophy_case.new_unlock = fox;
+    ctx.trophy_case.new_unlock_ts = std.time.milliTimestamp() + constants.trophy_unlock_display_time;
+}
+
+pub inline fn is_unlocked(ctx: *Context, comptime fox: Trophy.Tag) bool {
+    return ctx.trophy_case.displays.getAssertContains(fox);
 }

@@ -69,11 +69,11 @@ pub fn leave(ctx: *Context) !void {
 pub fn update(ctx: *Context) !void {
     const go_back =
         raygui.guiButton(.{
-            .x = constants.SIZE_WIDTH - 12 - 32,
-            .width = 32,
-            .y = 12,
-            .height = 32,
-        }, "#118#") != 0 or raylib.isKeyPressed(.escape) or (raylib.isKeyPressed(.i) and !just_entered);
+        .x = constants.SIZE_WIDTH - 12 - 32,
+        .width = 32,
+        .y = 12,
+        .height = 32,
+    }, "#118#") != 0 or raylib.isKeyPressed(.escape) or (raylib.isKeyPressed(.i) and !just_entered);
     if (go_back)
         try ctx.switch_driver(&State.states.Game);
 
@@ -92,7 +92,7 @@ pub fn render(ctx: *Context) !void {
 
     const coins_y = 150;
 
-    const pos_coins_text = std.fmt.bufPrintZ(buffer[0..], "Positive coins: {d} ({d:02.2}%)", .{ num_pos, pos_chance }) catch unreachable;
+    const pos_coins_text = std.fmt.bufPrintZ(buffer[0..], "Heads: {d} ({d:02.2}%)", .{ num_pos, pos_chance }) catch unreachable;
     raylib.drawText(pos_coins_text, 15, coins_y, 24, text_color);
 
     var pos_coin_index: i32 = 0;
@@ -107,7 +107,7 @@ pub fn render(ctx: *Context) !void {
     }
 
     const spacing: i32 = pos_coin_index * 20 + 50;
-    const neg_coins_text = std.fmt.bufPrintZ(buffer[0..], "Negative coins: {d} ({d:02.2}%)", .{ num_neg, neg_chance }) catch unreachable;
+    const neg_coins_text = std.fmt.bufPrintZ(buffer[0..], "Tails: {d} ({d:02.2}%)", .{ num_neg, neg_chance }) catch unreachable;
     raylib.drawText(neg_coins_text, 15, spacing + coins_y, 24, text_color);
 
     var neg_coin_index: i32 = 0;

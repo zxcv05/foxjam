@@ -7,6 +7,7 @@ const State = @import("State.zig");
 const Animation = @import("../Animation.zig");
 const constants = @import("../constants.zig");
 const Context = @import("../Context.zig");
+const trophy = @import("../trophy.zig");
 const types = @import("../types.zig");
 
 pub const interface = State{
@@ -77,8 +78,15 @@ pub fn update(ctx: *Context) !void {
             .y = 12,
             .height = 32,
         }, "#140#") != 0 or raylib.isKeyPressed(.escape);
+
     if (go_to_pause_menu)
         try ctx.switch_driver(&State.states.PauseMenu);
+
+    if (raylib.isKeyPressed(.up)) ctx.bet_percentage = 1.0;
+    if (raylib.isKeyPressed(.down)) ctx.bet_percentage = 0.05;
+
+    if (raylib.isKeyPressed(.left) or raylib.isKeyPressedRepeat(.left)) ctx.bet_percentage -= 0.05;
+    if (raylib.isKeyPressed(.right) or raylib.isKeyPressedRepeat(.right)) ctx.bet_percentage += 0.05;
 
     _ = raygui.guiSliderBar(.{
         .x = 12 + 96 + 12 + 96 + 12,
@@ -87,11 +95,8 @@ pub fn update(ctx: *Context) !void {
         .height = 64,
     }, "", "", &ctx.bet_percentage, 0.0, 1.0);
 
-    if (raylib.isKeyPressed(.left)) ctx.bet_percentage -= 0.05;
-    if (raylib.isKeyPressed(.right)) ctx.bet_percentage += 0.05;
-
     // This makes the slider do steps of 0.05
-    ctx.bet_percentage = std.math.clamp(@round(ctx.bet_percentage * 20) / 20, 0.0, 1.0);
+    ctx.bet_percentage = std.math.clamp(@round(ctx.bet_percentage * 20) / 20, 0.05, 1.0);
 
     const going_to_work =
         raygui.guiButton(.{
@@ -103,10 +108,7 @@ pub fn update(ctx: *Context) !void {
 
     if (going_to_work) {
         ctx.money += rng.random().intRangeAtMost(u256, constants.work_money_min, constants.work_money_max);
-
-        // TODO: Should this be click or coin?
-        // definitely coin, ure getting cash after all
-        ctx.assets.play_sound("coin2");
+        ctx.assets.play_sound("coin1");
     }
 
     { // shop stuff
@@ -132,8 +134,8 @@ pub fn update(ctx: *Context) !void {
             if (ctx.money >= refresh_price) {
                 defer ctx.money -= refresh_price;
                 ctx.refreshShop();
-                ctx.assets.play_sound("click2");
-            } else ctx.assets.play_sound("click_bad");
+                ctx.assets.play_sound("click1");
+            } else ctx.assets.play_sound("click2");
         }
 
         display_loop: for (0..constants.max_shop_items) |display_num| {
@@ -161,15 +163,15 @@ pub fn update(ctx: *Context) !void {
                 }, display_text) != 0;
             if (buying_item) {
                 if (ctx.shop_items[display_num] == .not_unlocked or ctx.shop_items[display_num] == .sold) {
-                    ctx.assets.play_sound("click_bad");
+                    ctx.assets.play_sound("click2");
                     continue :display_loop;
                 }
                 // we know its selling
                 if (ctx.money < ctx.shop_items[display_num].selling.price) {
-                    ctx.assets.play_sound("click_bad");
+                    ctx.assets.play_sound("click2");
                     continue :display_loop;
                 }
-                ctx.assets.play_sound("coin2");
+                ctx.assets.play_sound("click1");
                 ctx.money -= ctx.shop_items[display_num].selling.price;
                 switch (ctx.shop_items[display_num].selling.coin) {
                     .win, .additive_win, .better_win, .next_duration_multiplier, .next_multiplier, .next_value_multiplier => try ctx.coin_deck.positive_deck.append(ctx.allocator, ctx.shop_items[display_num].selling.coin),
@@ -221,6 +223,8 @@ pub fn update(ctx: *Context) !void {
             .better_win => |val| ctx.money +|= @intFromFloat(@as(f32, @floatFromInt(bet_amount * ctx.effects.multiplier)) * (1.0 + val)),
         }
 
+        trophy.unlock_if(ctx, .arctic, ctx.money == 0);
+        trophy.unlock_if(ctx, .sand, ctx.money >= 1_000_000_00);
         ctx.effects.update(ctx.allocator);
     }
 

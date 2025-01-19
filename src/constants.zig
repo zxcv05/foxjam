@@ -19,3 +19,5 @@ pub const work_money_max = 30;
 
 pub const fox_texture_width = 96;
 pub const fox_texture_height = 104;
+
+pub const trophy_unlock_display_time = 5_000; // ms
