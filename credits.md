@@ -21,7 +21,3 @@
 - `coin_0*.png` by `Puddin`
   - https://opengameart.org/content/rotating-coin
   - CC0
-
-- `burger.png` by `Gobusto`
-  - https://opengameart.org/content/burger
-  - CC-BY-SA 3.0
