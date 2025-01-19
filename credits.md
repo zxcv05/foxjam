@@ -24,4 +24,4 @@
 
 - `fox_*.png` by `dragin_fire`
   - @dragin_fire on discord
-  - TODO
+  - All Rights Reserved

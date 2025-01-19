@@ -17,6 +17,7 @@ pub const interface = State{
 };
 
 var just_entered: bool = false;
+var show_golden: bool = false;
 
 pub fn init(ctx: *Context) !void {
     _ = ctx;
@@ -27,8 +28,8 @@ pub fn deinit(ctx: *Context) void {
 }
 
 pub fn enter(ctx: *Context) !void {
-    _ = ctx;
     just_entered = true;
+    show_golden = has_all_trophies(ctx);
 }
 
 pub fn leave(ctx: *Context) !void {
@@ -48,11 +49,10 @@ pub fn render(ctx: *Context) !void {
     raylib.drawText("Trophies", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Trophies", 48), 2), 24, 48, text_color);
 
     // these are manually tweaked to perfection
-    const pad_x = 105;
-    const pad_y = 57;
+    const pad_x = constants.fox_texture_width + 12;
+    const pad_y = @divFloor(constants.fox_texture_height, 2.25);
 
-    const off_x = -10;
-    const off_y = -6;
+    const off_y = -32;
 
     const center_x = constants.SIZE_WIDTH / 2;
     const center_y = constants.SIZE_HEIGHT / 2;
@@ -62,53 +62,88 @@ pub fn render(ctx: *Context) !void {
     const mouse_x = raylib.getMouseX();
     const mouse_y = raylib.getMouseY();
 
-    var show_tooltip_for: ?trophy.Trophy.Tag = null;
+    var tooltip: ?Tooltip = null;
 
-    process_trophy(ctx, .orange,      off_x + center_x - pad_x * 4, off_y + center_y - pad_y * 4, mouse_x, mouse_y, &show_tooltip_for);
-    process_trophy(ctx, .white,       off_x + center_x - pad_x * 2, off_y + center_y - pad_y * 4, mouse_x, mouse_y, &show_tooltip_for);
-    process_trophy(ctx, .black,       off_x + center_x + pad_x * 0, off_y + center_y - pad_y * 4, mouse_x, mouse_y, &show_tooltip_for);
-    process_trophy(ctx, .bat,         off_x + center_x + pad_x * 2, off_y + center_y - pad_y * 4, mouse_x, mouse_y, &show_tooltip_for);
+    process_trophy(ctx, .red,         center_x - pad_x * 4, off_y + center_y - pad_y * 5, mouse_x, mouse_y, &tooltip);
+    process_trophy(ctx, .arctic,      center_x - pad_x * 2, off_y + center_y - pad_y * 5, mouse_x, mouse_y, &tooltip);
+    process_trophy(ctx, .black,       center_x + pad_x * 1, off_y + center_y - pad_y * 5, mouse_x, mouse_y, &tooltip);
+    process_trophy(ctx, .fennec,      center_x + pad_x * 3, off_y + center_y - pad_y * 5, mouse_x, mouse_y, &tooltip);
 
-    process_trophy(ctx, .fennec,      off_x + center_x - pad_x * 3, off_y + center_y - pad_y * 2, mouse_x, mouse_y, &show_tooltip_for);
-    process_trophy(ctx, .sand,        off_x + center_x - pad_x * 1, off_y + center_y - pad_y * 2, mouse_x, mouse_y, &show_tooltip_for);
-    process_trophy(ctx, .corsac,      off_x + center_x + pad_x * 1, off_y + center_y - pad_y * 2, mouse_x, mouse_y, &show_tooltip_for);
-    process_trophy(ctx, .robin,       off_x + center_x + pad_x * 3, off_y + center_y - pad_y * 2, mouse_x, mouse_y, &show_tooltip_for);
+    process_trophy(ctx, .sand,        center_x - pad_x * 3, off_y + center_y - pad_y * 3, mouse_x, mouse_y, &tooltip);
+    process_trophy(ctx, .corsac,      center_x + pad_x * 2, off_y + center_y - pad_y * 3, mouse_x, mouse_y, &tooltip);
 
-    process_trophy(ctx, .fire,        off_x + center_x - pad_x * 4, off_y + center_y + pad_y * 0, mouse_x, mouse_y, &show_tooltip_for);
-    process_trophy(ctx, .@"8bit",     off_x + center_x - pad_x * 2, off_y + center_y + pad_y * 0, mouse_x, mouse_y, &show_tooltip_for);
-    process_trophy(ctx, .news,        off_x + center_x + pad_x * 0, off_y + center_y + pad_y * 0, mouse_x, mouse_y, &show_tooltip_for);
-    process_trophy(ctx, .unfinished,  off_x + center_x + pad_x * 2, off_y + center_y + pad_y * 0, mouse_x, mouse_y, &show_tooltip_for);
+    if (show_golden)
+        process_trophy(ctx, .golden,  center_x - constants.fox_texture_width / 2, off_y + center_y - pad_y * 2, mouse_x, mouse_y, &tooltip);
 
-    process_trophy(ctx, .umbryan,     off_x + center_x - pad_x * 3, off_y + center_y + pad_y * 2, mouse_x, mouse_y, &show_tooltip_for);
-    process_trophy(ctx, .orange,      off_x + center_x - pad_x * 1, off_y + center_y + pad_y * 2, mouse_x, mouse_y, &show_tooltip_for);
-    process_trophy(ctx, .orange,      off_x + center_x + pad_x * 1, off_y + center_y + pad_y * 2, mouse_x, mouse_y, &show_tooltip_for);
-    process_trophy(ctx, .orange,      off_x + center_x + pad_x * 3, off_y + center_y + pad_y * 2, mouse_x, mouse_y, &show_tooltip_for);
+    process_trophy(ctx, .real,        center_x - pad_x * 4, off_y + center_y - pad_y * 1, mouse_x, mouse_y, &tooltip);
+    process_trophy(ctx, .@"8bit",     center_x - pad_x * 2, off_y + center_y - pad_y * 1, mouse_x, mouse_y, &tooltip);
+    process_trophy(ctx, .fire,        center_x + pad_x * 1, off_y + center_y - pad_y * 1, mouse_x, mouse_y, &tooltip);
+    process_trophy(ctx, .unfinished,  center_x + pad_x * 3, off_y + center_y - pad_y * 1, mouse_x, mouse_y, &tooltip);
+
+    process_trophy(ctx, .kitsune,     center_x - pad_x * 3, off_y + center_y + pad_y * 1, mouse_x, mouse_y, &tooltip);
+    process_trophy(ctx, .news,        center_x + pad_x * 2, off_y + center_y + pad_y * 1, mouse_x, mouse_y, &tooltip);
+
+    process_trophy(ctx, .bat,         center_x - pad_x * 4, off_y + center_y + pad_y * 3, mouse_x, mouse_y, &tooltip);
+    process_trophy(ctx, .robin,       center_x - pad_x * 2, off_y + center_y + pad_y * 3, mouse_x, mouse_y, &tooltip);
+    process_trophy(ctx, .umbryan,     center_x + pad_x * 1, off_y + center_y + pad_y * 3, mouse_x, mouse_y, &tooltip);
+    process_trophy(ctx, .dog,         center_x + pad_x * 3, off_y + center_y + pad_y * 3, mouse_x, mouse_y, &tooltip);
 
     // zig fmt: on
 
-    if (show_tooltip_for) |fox| {
-        const text = trophy.get_description_for(fox);
-        const x = if (mouse_x <= constants.SIZE_WIDTH / 2) mouse_x + 24 else mouse_x - raylib.measureText(text, 24) - 8;
+    if (tooltip) |tt| switch (tt) {
+        .name => |fox| {
+            const text = if (ctx.trophy_case.displays.getAssertContains(fox)) @tagName(fox) else "???";
+            const x = if (mouse_x <= constants.SIZE_WIDTH / 2) mouse_x + 16 else mouse_x - raylib.measureText(text, 24) - 8;
 
-        raylib.drawText(text, x + 3, mouse_y + 3, 24, raylib.Color.black);
-        raylib.drawText(text, x, mouse_y, 24, raylib.Color.white);
-    }
+            raylib.drawText(text, x + 2, mouse_y + 2, 24, raylib.Color.black);
+            raylib.drawText(text, x, mouse_y, 24, raylib.Color.white);
+        },
+        .description => |fox| {
+            const text = if (ctx.trophy_case.displays.getAssertContains(fox)) trophy.get_description_for(fox) else "???";
+            const x = if (mouse_x <= constants.SIZE_WIDTH / 2) mouse_x + 16 else mouse_x - raylib.measureText(text, 24) - 8;
+
+            if (fox == .golden)
+                raygui.guiDrawIcon(186, center_x - 32, center_y - pad_y * 4, 4, raylib.Color.red);
+
+            raylib.drawText(text, x + 2, mouse_y + 2, 24, raylib.Color.black);
+            raylib.drawText(text, x, mouse_y, 24, raylib.Color.white);
+        },
+    };
 }
 
-pub fn process_trophy(ctx: *Context, comptime fox: trophy.Trophy.Tag, x: comptime_int, y: comptime_int, mouse_x: i32, mouse_y: i32, tooltip: *?trophy.Trophy.Tag) void {
-    const tint = if (ctx.trophy_case.displays.getAssertContains(fox)) raylib.Color.white else raylib.Color.dark_gray;
+fn process_trophy(ctx: *Context, comptime fox: trophy.Trophy.Tag, x: comptime_int, y: comptime_int, mouse_x: i32, mouse_y: i32, tooltip: *?Tooltip) void {
+    const tint = if (ctx.trophy_case.displays.getAssertContains(fox)) raylib.Color.white else raylib.Color.black;
     const texture = trophy.get_texture_for(ctx, fox);
 
-    const width_diff = @divTrunc(texture.width - 128, 2);
-    const height_diff = texture.height - 180;
+    const stand_height = 80;
+    const stand_width = 128;
 
-    const start_x = x - width_diff;
-    const start_y = y - height_diff;
+    const stand_x = x - (stand_width - constants.fox_texture_width) / 2;
+    const stand_y = y + constants.fox_texture_height - 5;
 
-    if (mouse_x >= start_x and mouse_x <= start_x + texture.width and
-        mouse_y >= start_y and mouse_y <= start_y + texture.height and
-        ctx.trophy_case.displays.getAssertContains(fox))
-        tooltip.* = fox;
+    if (mouse_x >= x and mouse_x <= x + constants.fox_texture_width and
+        mouse_y >= y and mouse_y <= y + constants.fox_texture_height)
+        tooltip.* = .{ .description = fox }
+    else if (mouse_x >= stand_x and mouse_x <= stand_x + stand_width and
+        mouse_y >= stand_y and mouse_y <= stand_y + stand_height)
+        tooltip.* = .{ .name = fox };
 
-    raylib.drawTexture(texture, start_x, start_y, tint);
+    raylib.drawTexture(texture, x, y, tint);
+    raylib.drawTexture(ctx.assets.fox_stand, stand_x, stand_y, raylib.Color.white);
 }
+
+fn has_all_trophies(ctx: *Context) bool {
+    inline for (@typeInfo(trophy.Trophy.Tag).@"enum".fields) |field_info| {
+        const value: trophy.Trophy.Tag = @enumFromInt(field_info.value);
+        if (comptime value == .golden) continue;
+
+        if (!ctx.trophy_case.displays.getAssertContains(value)) return false;
+    }
+
+    return true;
+}
+
+const Tooltip = union(enum) {
+    name: trophy.Trophy.Tag,
+    description: trophy.Trophy.Tag,
+};

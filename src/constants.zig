@@ -16,3 +16,6 @@ pub const starting_money = 10_00;
 
 pub const work_money_min = 15;
 pub const work_money_max = 40;
+
+pub const fox_texture_width = 96;
+pub const fox_texture_height = 104;

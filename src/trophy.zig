@@ -7,23 +7,27 @@ const Context = @import("Context.zig");
 pub const Trophy = union(enum) {
     pub const Tag = @typeInfo(Trophy).@"union".tag_type.?;
 
-    orange: void,
-    white: void,
-    black: void,
-    bat: void,
-    fennec: void,
-    sand: void,
-    corsac: void,
-    robin: void,
-    fire: void,
     @"8bit": void,
+    arctic: void,
+    bat: void,
+    black: void,
+    corsac: void,
+    dog: void,
+    fennec: void,
+    fire: void,
+    golden: void,
+    kitsune: void,
     news: void,
-    unfinished: void,
+    real: void,
+    red: void,
+    robin: void,
+    sand: void,
     umbryan: void,
+    unfinished: void,
 };
 
 pub const Case = struct {
-    displays: std.EnumMap(Trophy.Tag, bool) = .initFull(true),
+    displays: std.EnumMap(Trophy.Tag, bool) = .initFull(false),
 
     const packed_display = packed struct(u8) {
         enabled: u1,
@@ -68,18 +72,22 @@ pub inline fn get_texture_for(ctx: *const Context, comptime fox: Trophy.Tag) ray
 
 pub inline fn get_description_for(fox: Trophy.Tag) [*:0]const u8 {
     return switch (fox) {
-        .orange => "Just your average wild fox.",
-        .white => "Cold their heart like\nthe snow that surrounds them.",
-        .black => "Shape of a wolf, color of a cat...\nYet it is neither.",
-        .bat => "It can't actually fly, unfortunately...",
-        .fennec => "Have a problem? This little guy is all ears!",
-        .sand => "No, it's not actually made of sand.",
-        .corsac => "Fox? Dog..? What are you??",
-        .robin => "Steals from the rich, gives to the poor.",
-        .fire => "Likes to sleep on the web.",
         .@"8bit" => "Who turned down the quality?",
+        .arctic => "Cold their heart like\nthe snow that surrounds them.",
+        .bat => "It can't actually fly, unfortunately...",
+        .black => "Shape of a wolf, color of a cat...\nYet it is neither.",
+        .corsac => "Fox? Dog..? What are you??",
+        .dog => "How did you get here?",
+        .fennec => "Have a problem? This little guy is all ears!",
+        .fire => "Likes to sleep on the web.",
+        .golden => "The rarest fox of them all!\nThank you for playing <3",
+        .kitsune => "The queen of ghost foxes!",
         .news => "What do you mean it's not about foxes?!",
-        .unfinished => "The artist didn't finish this one... Oh well.",
+        .real => "Who turned up the quality?",
+        .red => "Just your average wild fox.",
+        .robin => "Steals from the rich, gives to the poor.",
+        .sand => "No, it's not actually made of sand.",
         .umbryan => "Legally distinct for copyright reasons.",
+        .unfinished => "The artist didn't finish this one... Oh well.",
     };
 }
