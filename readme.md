@@ -13,4 +13,5 @@ Submission for Mini Jam 176: Foxes
 
 ## Contributers
 - [zxcv](https://github.com/zxcv05/)
-- [Rue](https://github.com/IOKG04/)
+- [rue04](https://github.com/IOKG04/)
+- [dragin_fire](https://github.com/Draginfire-3)
