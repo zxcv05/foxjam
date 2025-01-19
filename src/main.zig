@@ -20,20 +20,17 @@ pub fn main() !void {
     var config_dir = try std.fs.openDirAbsolute(config_dir_path, .{});
     defer config_dir.close();
 
-// the below code breaks my code, so bye bye :3
-// if i read the code correctly, what you need to do fix it is make it so the shop items and refreshes also get serialized
-//    var ctx = get_ctx: {
-//        const file = config_dir.openFile("ctx.sav", .{ .mode = .read_only }) catch {
-//            break :get_ctx try Context.init(alloc);
-//        };
-//        defer file.close();
-//
-//        break :get_ctx serde.deserialize(Context, alloc, file.reader().any()) catch |e| {
-//            std.log.err("failed loading ctx: {s}", .{@errorName(e)});
-//            break :get_ctx try Context.init(alloc);
-//        };
-//    };
-    var ctx = try Context.init(alloc);
+    var ctx = get_ctx: {
+        const file = config_dir.openFile("ctx.sav", .{ .mode = .read_only }) catch {
+            break :get_ctx try Context.init(alloc);
+        };
+        defer file.close();
+
+        break :get_ctx serde.deserialize(Context, alloc, file.reader().any()) catch |e| {
+            std.log.err("failed loading ctx: {s}", .{@errorName(e)});
+            break :get_ctx try Context.init(alloc);
+        };
+    };
     defer ctx.deinit();
 
     raylib.initWindow(constants.SIZE_WIDTH, constants.SIZE_HEIGHT, "minijam - fox theme");

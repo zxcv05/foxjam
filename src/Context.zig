@@ -10,8 +10,6 @@ const constants = @import("constants.zig");
 const types = @import("types.zig");
 const Serde = @import("serde.zig");
 
-const ContextSerde = Serde(Context, &.{ "coin_deck", "last_coin", "money", "bet_percentage", "effects" });
-
 const Context = @This();
 
 running: bool = true,
@@ -31,10 +29,14 @@ shop_refreshes: u16 = 0,
 
 pub fn serialize(this: *const Context, writer: std.io.AnyWriter) !void {
     try this.coin_deck.serialize(writer);
-    _ = try writer.write(std.mem.asBytes(&this.last_coin));
+    _ = try writer.writeAll(std.mem.asBytes(&this.last_coin));
     try writer.writeInt(@FieldType(Context, "money"), this.money, .big);
-    _ = try writer.write(std.mem.asBytes(&this.bet_percentage));
+    _ = try writer.writeAll(std.mem.asBytes(&this.bet_percentage));
     try this.effects.serialize(writer);
+
+    try writer.writeInt(u16, this.shop_refreshes, .big);
+    try writer.writeInt(usize, this.shop_items.len, .big);
+    _ = try writer.writeAll(std.mem.sliceAsBytes(this.shop_items[0..]));
 }
 
 pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context {
@@ -52,6 +54,14 @@ pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context 
 
     const effects = try types.EffectList.deserialize(alloc, reader);
 
+    const shop_refreshes = try reader.readInt(u16, .big);
+    const shop_items_len = try reader.readInt(usize, .big);
+
+    if (shop_items_len != constants.max_shop_items) return error.InvalidSave;
+
+    var shop_items: [constants.max_shop_items]types.ShopItem = undefined;
+    _ = try reader.readAll(std.mem.sliceAsBytes(shop_items[0..]));
+
     return .{
         .allocator = alloc,
         .coin_deck = coin_deck,
@@ -59,6 +69,8 @@ pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context 
         .money = money,
         .bet_percentage = bet_percentage,
         .effects = effects,
+        .shop_refreshes = shop_refreshes,
+        .shop_items = shop_items,
     };
 }
 
@@ -93,17 +105,17 @@ pub fn refreshShop(ctx: *Context) void {
     var rng_outer = std.Random.DefaultPrng.init(@truncate(@abs(std.time.microTimestamp())));
     const rng = rng_outer.random();
 
-    const is_mid_game = countTrues(&[_]bool {
+    const is_mid_game = countTrues(&[_]bool{
         ctx.shop_refreshes >= 4,
         ctx.coin_deck.flips >= 10,
         ctx.money >= 50_00,
     }) >= 2;
-    const is_end_game = countTrues(&[_]bool {
+    const is_end_game = countTrues(&[_]bool{
         ctx.shop_refreshes >= 11,
         ctx.coin_deck.flips >= 25,
         ctx.money >= 250_00,
     }) >= 2;
-    const is_legendary = countTrues(&[_]bool {
+    const is_legendary = countTrues(&[_]bool{
         ctx.shop_refreshes >= 21,
         ctx.coin_deck.flips >= 50,
         ctx.money >= 1000_00,
@@ -117,21 +129,17 @@ pub fn refreshShop(ctx: *Context) void {
             ctx.shop_items[i] = .{ .selling = .{
                 .coin = legendary_shop_items[random_index],
                 .price = @intFromFloat(3 * base_price * std.math.clamp(rng.floatNorm(f32) * 0.2 + 1.0, 0.5, 2.0)),
-            }};
+            } };
             continue;
         }
 
         const possible_items: ?[]const types.Coin = switch (i) {
             0, 1 => // starting displays
-                if (is_mid_game) &(early_shop_items ++ mid_shop_items)
-                else             &early_shop_items,
+            if (is_mid_game) &(early_shop_items ++ mid_shop_items) else &early_shop_items,
             2 => // mid game shop
-                if (!is_mid_game)     null
-                else if (is_end_game) &(mid_shop_items ++ end_shop_items)
-                else                  &mid_shop_items,
+            if (!is_mid_game) null else if (is_end_game) &(mid_shop_items ++ end_shop_items) else &mid_shop_items,
             3 => // end game shop
-                if (!is_end_game) null
-                else              &end_shop_items,
+            if (!is_end_game) null else &end_shop_items,
             else => unreachable,
         };
         if (possible_items) |items| {
@@ -139,13 +147,11 @@ pub fn refreshShop(ctx: *Context) void {
             ctx.shop_items[i] = .{ .selling = .{
                 .coin = items[random_index],
                 .price = @intFromFloat(base_price * std.math.clamp(rng.floatNorm(f32) * 0.1 + 1.0, 0.0, 2.0)),
-            }};
-        }
-        else
-            ctx.shop_items[i] = .{ .not_unlocked = {} };
+            } };
+        } else ctx.shop_items[i] = .{ .not_unlocked = {} };
     }
 }
-const early_shop_items = [_]types.Coin {
+const early_shop_items = [_]types.Coin{
     .{ .win = {} },
     .{ .win = {} },
     .{ .win = {} },
@@ -166,7 +172,7 @@ const early_shop_items = [_]types.Coin {
     .{ .weighted_coin = 0.15 },
     .{ .next_multiplier = 2 },
 };
-const mid_shop_items = [_]types.Coin {
+const mid_shop_items = [_]types.Coin{
     .{ .win = {} },
     .{ .win = {} },
     .{ .win = {} },
@@ -199,7 +205,7 @@ const mid_shop_items = [_]types.Coin {
     .{ .lesser_loss = 0.45 },
     .{ .lesser_loss = 0.40 },
 };
-const end_shop_items = [_]types.Coin {
+const end_shop_items = [_]types.Coin{
     .{ .better_win = 1.5 },
     .{ .better_win = 2.0 },
     .{ .better_win = 2.0 },
@@ -207,9 +213,9 @@ const end_shop_items = [_]types.Coin {
     .{ .better_win = 2.5 },
     .{ .better_win = 3.0 },
 
-    .{ .next_multiplier =  6 },
-    .{ .next_multiplier =  8 },
-    .{ .next_multiplier =  8 },
+    .{ .next_multiplier = 6 },
+    .{ .next_multiplier = 8 },
+    .{ .next_multiplier = 8 },
     .{ .next_multiplier = 10 },
 
     .{ .next_value_multiplier = 3 },
@@ -230,16 +236,18 @@ const end_shop_items = [_]types.Coin {
     .{ .lesser_loss = 0.25 },
     .{ .lesser_loss = 0.25 },
 };
-const legendary_shop_items = [_]types.Coin {
+const legendary_shop_items = [_]types.Coin{
     .{ .better_win = 10.0 },
     .{ .next_multiplier = 25 },
     .{ .next_value_multiplier = 10 },
     .{ .next_duration_multiplier = 10 },
-    .{ .weighted_coin = 1.0},
-    .{ .lesser_loss = 0.0},
+    .{ .weighted_coin = 1.0 },
+    .{ .lesser_loss = 0.0 },
 };
 fn countTrues(bools: []const bool) usize {
     var count: usize = 0;
-    for (bools) |b| { if (b) count += 1; }
+    for (bools) |b| {
+        if (b) count += 1;
+    }
     return count;
 }

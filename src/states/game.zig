@@ -88,10 +88,8 @@ pub fn update(ctx: *Context) !void {
     if (should_flip) {
         const bet_amount: @TypeOf(ctx.money) = @intFromFloat(@ceil(@as(f32, @floatFromInt(ctx.money)) * ctx.bet_percentage));
 
-        // disabling coin for new gui
-        // also it didnt really fit anyway
-        //coin_anim.frames_played = 0;
-        //show_coin = true;
+        coin_anim.frames_played = 0;
+        show_coin = true;
 
         ctx.last_coin = ctx.coin_deck.flip(
             ctx.effects.coin_weight / 2.0 +
@@ -243,11 +241,11 @@ pub fn render(ctx: *Context) !void {
         const texture = textures[coin_anim.frame_index];
         texture.drawEx(
             .{
-                .x = constants.SIZE_WIDTH / 2 - @as(f32, @floatFromInt(texture.width)),
-                .y = constants.SIZE_HEIGHT / 2 - @as(f32, @floatFromInt(texture.height)),
+                .x = constants.SIZE_WIDTH / 2 - @as(f32, @floatFromInt(texture.width)) * 0.75,
+                .y = constants.SIZE_HEIGHT / 2 - @as(f32, @floatFromInt(texture.height)) * 0.75 - 80,
             },
             0.0,
-            2.0,
+            1.5,
             raylib.Color.white,
         );
     }
