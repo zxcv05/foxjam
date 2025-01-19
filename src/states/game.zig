@@ -113,6 +113,13 @@ pub fn update(ctx: *Context) !void {
         const prev_text_size = raygui.guiGetStyle(.default, raygui.GuiDefaultProperty.text_size);
         defer raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, prev_text_size);
 
+        var text_buffer: [256]u8 = undefined;
+
+        const refresh_price: u256 = 10_00 + (ctx.shop_refreshes - 1) * 5_00;
+        const refresh_text = std.fmt.bufPrintZ(&text_buffer, "Refresh shop: ${d}.{d:02}", .{refresh_price / 100, refresh_price % 100}) catch |err| switch (err) {
+            std.fmt.BufPrintError.NoSpaceLeft => unreachable,
+            else => return err,
+        };
         raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, 22);
         const refreshing_shop =
             raygui.guiButton(.{
@@ -120,11 +127,10 @@ pub fn update(ctx: *Context) !void {
                 .width = 96 + 12 + 96,
                 .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64 - 12 - 64),
                 .height = 64,
-            }, "Refresh shop: $10.00") != 0 or raylib.isKeyPressed(.r);
-
+            }, refresh_text) != 0 or raylib.isKeyPressed(.r);
         if (refreshing_shop) {
-            if (ctx.money >= 10_00) {
-                defer ctx.money -= 10_00;
+            if (ctx.money >= refresh_price) {
+                defer ctx.money -= refresh_price;
                 ctx.refreshShop();
                 ctx.assets.play_sound("click2");
             } else ctx.assets.play_sound("click_bad");
@@ -132,19 +138,18 @@ pub fn update(ctx: *Context) !void {
 
         display_loop: for (0..constants.max_shop_items) |display_num| {
             raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, prev_text_size);
-            var display_text_buffer: [256]u8 = undefined;
             const display_text: [:0]const u8 = switch (ctx.shop_items[display_num]) {
                 .not_unlocked => "Not unlocked",
                 .sold         => "Sold",
                 .selling      => |val| blk: {
-                    const coin_text = val.coin.toString(&display_text_buffer, 1, 1) catch |err| switch (err) {
+                    const coin_text = val.coin.toString(&text_buffer, 1, 1) catch |err| switch (err) {
                         std.fmt.BufPrintError.NoSpaceLeft => unreachable,
                         else => return err,
                     };
                     raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, 16);
-                    display_text_buffer[coin_text.len] = '\n';
-                    const price_text = try std.fmt.bufPrintZ(display_text_buffer[(coin_text.len + 1)..], "Cost: ${d}.{d:02}", .{val.price / 100, val.price % 100});
-                    break :blk @ptrCast(display_text_buffer[0..(coin_text.len + 1 + price_text.len + 1)]);
+                    text_buffer[coin_text.len] = '\n';
+                    const price_text = try std.fmt.bufPrintZ(text_buffer[(coin_text.len + 1)..], "Cost: ${d}.{d:02}", .{val.price / 100, val.price % 100});
+                    break :blk @ptrCast(text_buffer[0..(coin_text.len + 1 + price_text.len + 1)]);
                 },
             };
             const buying_item =

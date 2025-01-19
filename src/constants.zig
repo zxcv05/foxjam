@@ -14,8 +14,8 @@ pub const max_shop_items = 4;
 // v units are still cents / $0.01 v //
 pub const starting_money = 10_00;
 
-pub const work_money_min = 15;
-pub const work_money_max = 40;
+pub const work_money_min = 10;
+pub const work_money_max = 30;
 
 pub const fox_texture_width = 96;
 pub const fox_texture_height = 104;
