@@ -33,6 +33,8 @@ shop_refreshes: u16 = 0,
 
 trophy_case: trophy.Case = .{},
 
+losses_in_a_row: u16 = 0,
+
 pub fn serialize(this: *const Context, writer: std.io.AnyWriter) !void {
     try this.settings.serialize(writer);
     try this.coin_deck.serialize(writer);
@@ -128,6 +130,10 @@ pub inline fn positive_chance(this: *Context) f32 {
             0.0,
             1.0,
         ),
+    ) + std.math.clamp(
+        (@as(f32, @floatFromInt(this.losses_in_a_row)) - 1.0) * 0.1,
+        0.0,
+        0.5,
     );
 }
 
@@ -177,7 +183,13 @@ pub fn refreshShop(ctx: *Context) void {
         if (possible_items) |items| {
             const random_index = rng.uintLessThan(usize, items.len);
             ctx.shop_items[i] = .{ .selling = .{
-                .coin = items[random_index],
+                .coin = switch (items[random_index]) {
+                    .additive_win => |val| .{ .additive_win = @intFromFloat(@as(f32, @floatFromInt(val)) * std.math.clamp(rng.floatNorm(f32) * 0.1 + 1.0, 0.5, 2.0)) },
+                    .lesser_loss => |val| .{ .lesser_loss = val * std.math.clamp(rng.floatNorm(f32) * 0.1 + 1.0, 0.5, 2.0) },
+                    .weighted_coin => |val| .{ .weighted_coin = val * std.math.clamp(rng.floatNorm(f32) * 0.1 + 1.0, 0.5, 2.0) },
+                    .better_win => |val| .{ .better_win = val * std.math.clamp(rng.floatNorm(f32) * 0.1 + 1.0, 0.5, 2.0) },
+                    else => items[random_index],
+                },
                 .price = @intFromFloat(base_price * std.math.clamp(rng.floatNorm(f32) * 0.1 + 1.0, 0.0, 2.0)),
             } };
         } else ctx.shop_items[i] = .{ .not_unlocked = {} };

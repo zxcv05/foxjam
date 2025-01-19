@@ -262,10 +262,15 @@ pub const CoinDeck = struct {
     /// positive chance is the chance to get one from the positive deck, otherwise you'll get a negative coin
     pub fn flip(self: *CoinDeck) Coin {
         const ctx: *Context = @alignCast(@fieldParentPtr("coin_deck", self)); // hehe :3
+                                                                              // i assume well keep this open source, god people might hate this
+                                                                              // dont listen to the haters tho, i love it :3
         const rand = self.rng.random();
 
         // get deck
         const positive = rand.float(f32) < ctx.positive_chance();
+        ctx.losses_in_a_row =
+            if (positive) 0
+            else          ctx.losses_in_a_row + 1;
         const deck = if (positive) self.positive_deck else self.negative_deck;
 
         // todo: is this the right place for this?

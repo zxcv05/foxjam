@@ -53,7 +53,7 @@ pub fn build(b: *std.Build) !void {
     const dist_dir: std.Build.InstallDir = .{ .custom = "dist" };
 
     const copy_res = b.addInstallDirectory(.{ .source_dir = .{ .cwd_relative = "res/" }, .install_dir = dist_dir, .install_subdir = "res" });
-    const copy_exe = b.addInstallArtifact(exe, .{ .dest_dir = .{ .override = dist_dir }, .dest_sub_path = "foxjam" });
+    const copy_exe = b.addInstallArtifact(exe, .{ .dest_dir = .{ .override = dist_dir }, .dest_sub_path = "foxjam.exe" });
 
     dist_step.dependOn(&copy_res.step);
     dist_step.dependOn(&copy_exe.step);
