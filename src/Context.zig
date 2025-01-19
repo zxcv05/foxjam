@@ -216,7 +216,10 @@ pub fn refreshShop(ctx: *Context) void {
     }) >= 2;
     trophy.unlock_if(ctx, .fire, is_legendary);
 
-    const base_price: f32 = @floatFromInt(@as(u256, ctx.shop_refreshes) * 1_50);
+    const shop_refreshes_u256 = @as(u256, ctx.shop_refreshes);
+    const base_price: f32 =
+        if (shop_refreshes_u256 <= 10) @floatFromInt(shop_refreshes_u256 * 1_50)
+        else                           @floatFromInt(shop_refreshes_u256 * shop_refreshes_u256 * 150 + 15000 - shop_refreshes_u256 * 2850);
 
     for (0..constants.max_shop_items) |i| {
         if (is_legendary and rng.float(f32) < 0.1) {
