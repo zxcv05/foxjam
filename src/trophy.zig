@@ -95,8 +95,34 @@ pub inline fn get_description_for(fox: Trophy.Tag) [*:0]const u8 {
     };
 }
 
+pub inline fn get_stand_description_for(fox: Trophy.Tag) [*:0]const u8 {
+    return switch (fox) {
+        .@"8bit" => "8-bit fox\n- Flipped a couple coins",
+        .arctic => "Arctic fox\n- The house always wins",
+        .bat => "Bat-Eared fox\n- That's a lot of negative coins",
+        .black => "Black fox\n- This can't be a livable wage...",
+        .corsac => "Corsac fox\n- That's a lot coins",
+        .dog => "Dog\n- 777",
+        .fennec => "Fennec fox\n- All those effects must be boosting my hearing",
+        .fire => "Firefox\n- Absolutely legendary",
+        .golden => "Golden fox\n- You're a cutie <3",
+        .kitsune => "Kitsune\n- I just like having options",
+        .news => "Fox News\n- Oof unlucky",
+        .real => "Realistic fox\n- Flipped a lot of coins",
+        .red => "Red fox\n- Thanks for playing :)",
+        .robin => "Robin Hood fox\n- Positivity is the core of a good life",
+        .sand => "Sand Tibetan fox\n- Filthy rich",
+        .umbryan => "Umbryan fox\n- You can't click that",
+        .unfinished => "Unfinished fox\n- Wait, seriously? That's it?",
+    };
+}
+
 pub inline fn unlock_if(ctx: *Context, comptime fox: Trophy.Tag, cond: bool) void {
     if (cond and !is_unlocked(ctx, fox)) unlock(ctx, fox);
+}
+
+pub inline fn is_unlocked(ctx: *Context, comptime fox: Trophy.Tag) bool {
+    return ctx.trophy_case.displays.getAssertContains(fox);
 }
 
 pub fn unlock(ctx: *Context, comptime fox: Trophy.Tag) void {
@@ -104,8 +130,4 @@ pub fn unlock(ctx: *Context, comptime fox: Trophy.Tag) void {
 
     ctx.trophy_case.new_unlock = fox;
     ctx.trophy_case.new_unlock_ts = std.time.milliTimestamp() + constants.trophy_unlock_display_time;
-}
-
-pub inline fn is_unlocked(ctx: *Context, comptime fox: Trophy.Tag) bool {
-    return ctx.trophy_case.displays.getAssertContains(fox);
 }

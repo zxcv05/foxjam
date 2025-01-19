@@ -88,12 +88,12 @@ pub fn render(ctx: *Context) !void {
     raylib.drawText("Deck", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Deck", 48), 2), 24, 48, text_color);
 
     const flips_text = std.fmt.bufPrintZ(buffer[0..], "Flips: {d}", .{ctx.coin_deck.flips}) catch unreachable;
-    raylib.drawText(flips_text, 15, 100, 24, text_color);
+    raylib.drawText(flips_text, 25, 100, 24, text_color);
 
     const coins_y = 150;
 
     const pos_coins_text = std.fmt.bufPrintZ(buffer[0..], "Heads: {d} ({d:02.2}%)", .{ num_pos, pos_chance }) catch unreachable;
-    raylib.drawText(pos_coins_text, 15, coins_y, 24, text_color);
+    raylib.drawText(pos_coins_text, 25, coins_y, 24, text_color);
 
     var pos_coin_index: i32 = 0;
     var pos_coins_iter = pos_coins.iterator();
@@ -103,12 +103,12 @@ pub fn render(ctx: *Context) !void {
 
         const chance: f32 = @as(f32, @floatFromInt(coin.value.*)) / @as(f32, @floatFromInt(num_pos)) * 100;
         const text = std.fmt.bufPrintZ(buffer[0..], "- {s}: {d} ({d:.2}%)", .{ @tagName(coin.key), coin.value.*, chance }) catch unreachable;
-        raylib.drawText(text, 15, coins_y + pos_coin_index * 20 + 30, 20, text_color);
+        raylib.drawText(text, 25, coins_y + pos_coin_index * 20 + 30, 20, text_color);
     }
 
     const spacing: i32 = pos_coin_index * 20 + 50;
     const neg_coins_text = std.fmt.bufPrintZ(buffer[0..], "Tails: {d} ({d:02.2}%)", .{ num_neg, neg_chance }) catch unreachable;
-    raylib.drawText(neg_coins_text, 15, spacing + coins_y, 24, text_color);
+    raylib.drawText(neg_coins_text, 25, spacing + coins_y, 24, text_color);
 
     var neg_coin_index: i32 = 0;
     var neg_coins_iter = neg_coins.iterator();
@@ -118,6 +118,9 @@ pub fn render(ctx: *Context) !void {
 
         const chance: f32 = @as(f32, @floatFromInt(coin.value.*)) / @as(f32, @floatFromInt(num_neg)) * 100;
         const text = std.fmt.bufPrintZ(buffer[0..], "- {s}: {d} ({d:.2}%)", .{ @tagName(coin.key), coin.value.*, chance }) catch unreachable;
-        raylib.drawText(text, 15, spacing + coins_y + neg_coin_index * 20 + 30, 20, text_color);
+        raylib.drawText(text, 25, spacing + coins_y + neg_coin_index * 20 + 30, 20, text_color);
     }
+
+    const highest_money_text = std.fmt.bufPrintZ(buffer[0..], "Highest money: ${d}.{d:02}", .{ ctx.money / 100, ctx.money % 100 }) catch unreachable;
+    raylib.drawText(highest_money_text, 25, spacing + coins_y + neg_coin_index * 20 + 50, 20, text_color);
 }

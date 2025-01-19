@@ -14,6 +14,8 @@ const types = @import("types.zig");
 
 const Context = @This();
 
+pub const save_version: u8 = 0x25;
+
 running: bool = true,
 assets: Assets = .{},
 allocator: std.mem.Allocator,
@@ -24,6 +26,7 @@ settings: Settings = .{},
 coin_deck: types.CoinDeck = undefined,
 last_coin: types.Coin = .{ .win = {} },
 money: u256 = constants.starting_money,
+highest_money: u256 = constants.starting_money,
 
 bet_percentage: f32 = 0.5,
 effects: types.EffectList = .{},
@@ -39,10 +42,13 @@ losses_in_a_row: u16 = 0,
 wins_in_a_row: u16 = 0,
 
 pub fn serialize(this: *const Context, writer: std.io.AnyWriter) !void {
+    try writer.writeByte(save_version);
+
     try this.settings.serialize(writer);
     try this.coin_deck.serialize(writer);
     _ = try writer.writeAll(std.mem.asBytes(&this.last_coin));
     try writer.writeInt(@FieldType(Context, "money"), this.money, .big);
+    try writer.writeInt(@FieldType(Context, "highest_money"), this.highest_money, .big);
     _ = try writer.writeAll(std.mem.asBytes(&this.bet_percentage));
     try this.effects.serialize(writer);
 
@@ -55,6 +61,9 @@ pub fn serialize(this: *const Context, writer: std.io.AnyWriter) !void {
 }
 
 pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context {
+    const version = try reader.readByte();
+    if (save_version != version) return error.InvalidSave;
+
     const settings = try Settings.deserialize(alloc, reader);
     var coin_deck = try types.CoinDeck.deserialize(alloc, reader);
     errdefer coin_deck.deinit(alloc);
@@ -64,6 +73,7 @@ pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context 
     const last_coin = std.mem.bytesToValue(types.Coin, last_coins_bytes[0..]);
 
     const money = try reader.readInt(@FieldType(Context, "money"), .big);
+    const highest_money = try reader.readInt(@FieldType(Context, "highest_money"), .big);
 
     var bet_percentage_bytes: [@sizeOf(f32)]u8 = undefined;
     _ = try reader.readAll(bet_percentage_bytes[0..]);
@@ -93,6 +103,7 @@ pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context 
         .coin_deck = coin_deck,
         .last_coin = last_coin,
         .money = money,
+        .highest_money = highest_money,
         .bet_percentage = bet_percentage,
         .effects = effects,
         .shop_refreshes = shop_refreshes,
@@ -111,8 +122,6 @@ pub fn init(alloc: std.mem.Allocator) !Context {
     errdefer outp.coin_deck.deinit(alloc);
 
     outp.refreshShop();
-
-    outp.trophy_case.displays.put(.red, true);
 
     return outp;
 }

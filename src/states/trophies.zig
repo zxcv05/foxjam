@@ -31,6 +31,7 @@ pub fn enter(ctx: *Context) !void {
     just_entered = true;
     show_golden = has_all_trophies(ctx);
     trophy.unlock_if(ctx, .golden, show_golden);
+    trophy.unlock_if(ctx, .red, true);
 }
 
 pub fn leave(ctx: *Context) !void {
@@ -100,7 +101,7 @@ pub fn render(ctx: *Context) !void {
 
     if (tooltip) |tt| switch (tt) {
         .name => |fox| {
-            const text = if (ctx.trophy_case.displays.getAssertContains(fox)) @tagName(fox) else "???";
+            const text = if (ctx.trophy_case.displays.getAssertContains(fox)) trophy.get_stand_description_for(fox) else "???";
             const x = if (mouse_x <= constants.SIZE_WIDTH / 2) mouse_x + 16 else mouse_x - raylib.measureText(text, 24) - 8;
 
             raylib.drawText(text, x + 2, mouse_y + 2, 24, raylib.Color.black);
@@ -138,9 +139,10 @@ fn process_trophy(ctx: *Context, comptime fox: trophy.Trophy.Tag, x: comptime_in
 
     if (fox == .unfinished) {
         if ((mouse_x >= x and mouse_x <= x + constants.fox_texture_width and
-             mouse_y >= y and mouse_y <= y + constants.fox_texture_height) or
+            mouse_y >= y and mouse_y <= y + constants.fox_texture_height) or
             (mouse_x >= stand_x and mouse_x <= stand_x + stand_width and
-             mouse_y >= stand_y and mouse_y <= stand_y + stand_height)) {
+            mouse_y >= stand_y and mouse_y <= stand_y + stand_height))
+        {
             trophy.unlock_if(ctx, .unfinished, raylib.isMouseButtonPressed(.left));
         }
     }
