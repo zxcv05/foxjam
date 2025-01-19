@@ -76,7 +76,6 @@ pub fn update(ctx: *Context) !void {
 pub fn render(ctx: *Context) !void {
     var buffer: [64]u8 = undefined;
 
-    raylib.clearBackground(raylib.Color.black);
     const text_color = raylib.getColor(@bitCast(raygui.guiGetStyle(.default, raygui.GuiControlProperty.base_color_pressed)));
 
     raylib.drawText("Deck", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Deck", 48), 2), 24, 48, text_color);

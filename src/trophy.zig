@@ -12,15 +12,18 @@ pub const Trophy = union(enum) {
     black: void,
     bat: void,
     fennec: void,
-    tibetan: void,
+    sand: void,
     corsac: void,
     robin: void,
     fire: void,
     @"8bit": void,
+    news: void,
+    unfinished: void,
+    umbryan: void,
 };
 
 pub const Case = struct {
-    displays: std.EnumMap(Trophy.Tag, bool) = .initFull(false),
+    displays: std.EnumMap(Trophy.Tag, bool) = .initFull(true),
 
     const packed_display = packed struct(u8) {
         enabled: u1,
@@ -59,27 +62,24 @@ pub const Case = struct {
     }
 };
 
-pub inline fn get_texture_for(ctx: *const Context, fox: Trophy.Tag) raylib.Texture2D {
+pub inline fn get_texture_for(ctx: *const Context, comptime fox: Trophy.Tag) raylib.Texture2D {
     return @field(ctx.assets, "fox_" ++ @tagName(fox));
+}
 
-    // return switch (fox) {
-    //     // zig fmt: off
-    //     .orange  => ctx.assets.fox_orange,
-    //     .white   => ctx.assets.fox_white,
-    //     .black   => ctx.assets.fox_black,
-    //     .bat     => ctx.assets.fox_bat,
-    //     .fennec  => ctx.assets.fox_fennec,
-    //     .tibetan => ctx.assets.fox_tibetan,
-    //     .corsac  => ctx.assets.fox_corsac,
-    //     .robin   => ctx.assets.fox_robin,
-    //     .fire    => ctx.assets.fox_fire,
-    //     .@"8bit" => ctx.assets.fox_8bit,
-    //     // .orange => ctx.assets.fox_orange,
-    //     // .orange => ctx.assets.fox_orange,
-    //     // .orange => ctx.assets.fox_orange,
-    //     // .orange => ctx.assets.fox_orange,
-    //     // .orange => ctx.assets.fox_orange,
-    //     // .orange => ctx.assets.fox_orange,
-    //     // zig fmt: on
-    // };
+pub inline fn get_description_for(fox: Trophy.Tag) [*:0]const u8 {
+    return switch (fox) {
+        .orange => "Just your average wild fox.",
+        .white => "Cold their heart like\nthe snow that surrounds them.",
+        .black => "Shape of a wolf, color of a cat...\nYet it is neither.",
+        .bat => "It can't actually fly, unfortunately...",
+        .fennec => "Have a problem? This little guy is all ears!",
+        .sand => "No, it's not actually made of sand.",
+        .corsac => "Fox? Dog..? What are you??",
+        .robin => "Steals from the rich, gives to the poor.",
+        .fire => "Likes to sleep on the web.",
+        .@"8bit" => "Who turned down the quality?",
+        .news => "What do you mean it's not about foxes?!",
+        .unfinished => "The artist didn't finish this one... Oh well.",
+        .umbryan => "Legally distinct for copyright reasons.",
+    };
 }

@@ -37,6 +37,7 @@ pub fn main() !void {
     defer raylib.closeWindow();
 
     raygui.guiLoadStyle("res/style_dark.rgs");
+    raygui.guiSetStyle(.label, raygui.GuiDefaultProperty.text_size, 24);
     raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, 32);
     raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_alignment_vertical, @intFromEnum(raygui.GuiTextAlignmentVertical.text_align_middle));
     raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_wrap_mode, @intFromEnum(raygui.GuiTextWrapMode.text_wrap_word));
@@ -70,12 +71,12 @@ pub fn main() !void {
         if (raylib.isKeyPressed(.i) and ctx.driver != &State.states.Stats) try ctx.switch_driver(&State.states.Stats);
         if (raylib.isKeyPressed(.t) and ctx.driver != &State.states.Trophies) try ctx.switch_driver(&State.states.Trophies);
 
-        try ctx.driver.update(&ctx);
-
         raylib.beginDrawing();
         defer raylib.endDrawing();
-        raylib.clearBackground(raylib.Color.black);
 
+        raylib.drawTexture(ctx.assets.background, 0, 0, raylib.Color.white);
+
+        try ctx.driver.update(&ctx);
         try ctx.driver.render(&ctx);
     }
 }
