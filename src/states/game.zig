@@ -224,7 +224,7 @@ pub fn update(ctx: *Context) !void {
         }
 
         trophy.unlock_if(ctx, .arctic, ctx.money == 0);
-        trophy.unlock_if(ctx, .sand, ctx.money >= 1_000_000_00);
+        trophy.unlock_if(ctx, .sand, ctx.money >= 50_000_00);
         ctx.effects.update(ctx.allocator);
     }
 
