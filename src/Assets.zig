@@ -11,8 +11,6 @@ click: raylib.Sound = undefined,
 coin_bad: raylib.Sound = undefined,
 click_bad: raylib.Sound = undefined,
 
-burger: raylib.Texture2D = undefined,
-
 coin_01: raylib.Texture2D = undefined,
 coin_02: raylib.Texture2D = undefined,
 coin_03: raylib.Texture2D = undefined,
