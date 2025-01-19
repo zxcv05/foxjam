@@ -235,13 +235,15 @@ pub fn update(ctx: *Context) !void {
         trophy.unlock_if(ctx, .arctic, ctx.money == 0);
         trophy.unlock_if(ctx, .sand, ctx.money >= 1_000_000_00);
         trophy.unlock_if(ctx, .@"8bit", ctx.coin_deck.flips >= 100);
-        trophy.unlock_if(ctx, .real, ctx.coin_deck.flips >= 1_000);
+        trophy.unlock_if(ctx, .real, ctx.coin_deck.flips >= 500);
         trophy.unlock_if(ctx, .news, ctx.losses_in_a_row >= 4);
         trophy.unlock_if(ctx, .dog, ctx.wins_in_a_row >= 7);
         trophy.unlock_if(ctx, .fennec, ctx.effects.effects.len >= 4);
         ctx.effects.update(ctx.allocator);
 
         ctx.highest_money = @max(ctx.highest_money, ctx.money);
+
+        if (ctx.coin_deck.flips % 50 == 0) ctx.save() catch |e| std.log.err("Failed to auto save: {s}", .{@errorName(e)});
     }
 
     if (show_coin) {

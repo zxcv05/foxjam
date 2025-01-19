@@ -139,6 +139,9 @@ pub fn save(this: *Context) !void {
     var config_dir = try std.fs.openDirAbsolute(config_dir_path, .{});
     defer config_dir.close();
 
+    config_dir.deleteTree("ctx.sav.old") catch {};
+    config_dir.rename("ctx.sav", "ctx.sav.old") catch {};
+
     const file = try config_dir.createFile("ctx.sav", .{});
     defer file.close();
 
