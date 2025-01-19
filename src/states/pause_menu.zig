@@ -47,7 +47,7 @@ pub fn update(ctx: *Context) !void {
 pub fn render(ctx: *Context) !void {
     const text_color = raylib.getColor(@bitCast(raygui.guiGetStyle(.default, raygui.GuiControlProperty.base_color_pressed)));
 
-    raylib.drawText("Paused", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Paused", 48), 2), 24, 48, text_color);
+    raylib.drawText("Paused", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Paused", 50), 2), 24, 50, text_color);
 
     if (raygui.guiButton(.{ .x = 12, .y = 12, .width = 100, .height = 50 }, "Reset") > 0) {
         const allocator = ctx.allocator;

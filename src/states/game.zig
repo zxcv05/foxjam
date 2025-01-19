@@ -89,8 +89,8 @@ pub fn update(ctx: *Context) !void {
     if (raylib.isKeyPressed(.right) or raylib.isKeyPressedRepeat(.right)) ctx.bet_percentage += 0.05;
 
     _ = raygui.guiSliderBar(.{
-        .x = 12 + 96 + 12 + 96 + 12,
-        .width = @floatFromInt(constants.SIZE_WIDTH - 2 * (12 + 96 + 12 + 96 + 12)),
+        .x = 12,
+        .width = constants.SIZE_WIDTH - 12 - 12,
         .y = constants.SIZE_HEIGHT - 12 - 64 - 12 - 64,
         .height = 64,
     }, "", "", &ctx.bet_percentage, 0.0, 1.0);
@@ -102,7 +102,7 @@ pub fn update(ctx: *Context) !void {
         raygui.guiButton(.{
             .x = 12,
             .width = 96 + 12 + 96,
-            .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64 - 12 - 64),
+            .y = @floatFromInt(constants.SIZE_HEIGHT - 3 * (12 + 64)),
             .height = 64,
         }, "Go to work") != 0 or raylib.isKeyPressed(.w);
 
@@ -127,7 +127,7 @@ pub fn update(ctx: *Context) !void {
             raygui.guiButton(.{
                 .x = @floatFromInt(constants.SIZE_WIDTH - 12 - 96 - 12 - 96),
                 .width = 96 + 12 + 96,
-                .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64 - 12 - 64),
+                .y = @floatFromInt(constants.SIZE_HEIGHT - 3 * (12 + 64)),
                 .height = 64,
             }, refresh_text) != 0 or raylib.isKeyPressed(.r);
         if (refreshing_shop) {
@@ -158,7 +158,7 @@ pub fn update(ctx: *Context) !void {
                 raygui.guiButton(.{
                     .x = @floatFromInt(constants.SIZE_WIDTH - 12 - 96 - 12 - 96),
                     .width = 96 + 12 + 96,
-                    .y = @floatFromInt(constants.SIZE_HEIGHT - (3 + (3 - display_num)) * (12 + 64)),
+                    .y = @floatFromInt(constants.SIZE_HEIGHT - (4 + (3 - display_num)) * (12 + 64)),
                     .height = 64,
                 }, display_text) != 0;
             if (buying_item) {
@@ -241,39 +241,46 @@ pub fn render(ctx: *Context) !void {
             std.fmt.BufPrintError.NoSpaceLeft => unreachable,
             else => return err,
         };
-        const coin_text_width = raylib.measureText(coin_text.ptr, 32);
+        const coin_text_width = raylib.measureText(coin_text.ptr, 30);
         std.debug.assert(coin_text_width >= 0);
         raylib.drawText(
             coin_text.ptr,
             constants.SIZE_WIDTH / 2 - @divTrunc(coin_text_width, 2),
             constants.SIZE_HEIGHT - 12 - 46 - 12 - 64 - 12 - 64,
-            32,
+            30,
             raylib.Color.white
         );
     }
     { // draw current balance
         const balance_text = std.fmt.bufPrintZ(&text_buffer, "${d}.{d:02}", .{ ctx.money / 100, ctx.money % 100 }) catch unreachable;
-        const balance_text_width = raylib.measureText(balance_text.ptr, 48);
+        const balance_text_width = raylib.measureText(balance_text.ptr, 50);
         std.debug.assert(balance_text_width >= 0);
         raylib.drawText(
             balance_text,
             @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(balance_text_width, 2),
             12,
-            48,
+            50,
             raylib.Color.white
         );
     }
     { // draw bet amount
         const bet_amount: u64 = @intFromFloat(@ceil(@as(f32, @floatFromInt(ctx.money)) * ctx.bet_percentage));
         const bet_amount_text = std.fmt.bufPrintZ(&text_buffer, "Betting: ${d}.{d:02}", .{ bet_amount / 100, bet_amount % 100 }) catch unreachable;
-        const bet_amount_text_width = raylib.measureText(bet_amount_text.ptr, 32);
+        const bet_amount_text_width = raylib.measureText(bet_amount_text.ptr, 30);
         std.debug.assert(bet_amount_text_width >= 0);
+        raylib.drawText(
+            bet_amount_text,
+            @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(bet_amount_text_width, 2) + 2,
+            constants.SIZE_HEIGHT - 12 - 64 - 12 - 46 + 2,
+            30,
+            raylib.Color.black
+        );
         raylib.drawText(
             bet_amount_text,
             @as(i32, @intCast(constants.SIZE_WIDTH / 2)) - @divTrunc(bet_amount_text_width, 2),
             constants.SIZE_HEIGHT - 12 - 64 - 12 - 46,
-            32,
-            raylib.Color.black
+            30,
+            raylib.Color.init(0xf8, 0xa8, 0x7d, 0xff)
         );
     }
     var maybe_effect = ctx.effects.effects.first;
@@ -288,19 +295,13 @@ pub fn render(ctx: *Context) !void {
             .weighted_coin => |val| std.fmt.bufPrintZ(&text_buffer, "{d}% less likely to get bad coin", .{@as(u8, @intFromFloat(val * 100.0))}) catch unreachable,
             else => unreachable,
         };
-        _ = raygui.guiTextBox(.{
-            .x = 12,
-            .width = 96 + 12 + 96,
-            .y = @floatFromInt(12 + i * (64 + 12)),
-            .height = 64,
-        }, effect_text, 256, false);
-//        raylib.drawText(
-//            effect_text,
-//            2,
-//            @intCast(2 + i * 14),
-//            2,
-//            raylib.Color.white
-//        );
+        raylib.drawText(
+            effect_text,
+            12,
+            @intCast(12 + i * 20),
+            20,
+            raylib.Color.white
+        );
     }
 
     if (show_coin) {

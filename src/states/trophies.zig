@@ -53,7 +53,7 @@ pub fn update(ctx: *Context) !void {
 pub fn render(ctx: *Context) !void {
     const text_color = raylib.getColor(@bitCast(raygui.guiGetStyle(.default, raygui.GuiControlProperty.base_color_pressed)));
 
-    raylib.drawText("Trophies", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Trophies", 48), 2), 24, 48, text_color);
+    raylib.drawText("Trophies", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Trophies", 50), 2), 24, 50, text_color);
 
     // these are manually tweaked to perfection
     const pad_x = constants.fox_texture_width + 12;
@@ -107,13 +107,13 @@ pub fn render(ctx: *Context) !void {
         },
         .description => |fox| {
             const text = if (ctx.trophy_case.displays.getAssertContains(fox)) trophy.get_description_for(fox) else "???";
-            const x = if (mouse_x <= constants.SIZE_WIDTH / 2) mouse_x + 16 else mouse_x - raylib.measureText(text, 24) - 8;
+            const x = if (mouse_x <= constants.SIZE_WIDTH / 2) mouse_x + 16 else mouse_x - raylib.measureText(text, 20) - 8;
 
             if (fox == .golden)
                 raygui.guiDrawIcon(186, center_x - 32, center_y - pad_y * 4, 4, raylib.Color.red);
 
-            raylib.drawText(text, x + 2, mouse_y + 2, 24, raylib.Color.black);
-            raylib.drawText(text, x, mouse_y, 24, raylib.Color.white);
+            raylib.drawText(text, x + 2, mouse_y + 2, 20, raylib.Color.black);
+            raylib.drawText(text, x, mouse_y, 20, raylib.Color.white);
         },
     };
 }

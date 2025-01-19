@@ -53,7 +53,7 @@ pub fn render(ctx: *Context) !void {
 
     const text_color = raylib.getColor(@bitCast(raygui.guiGetStyle(.default, raygui.GuiControlProperty.base_color_pressed)));
 
-    raylib.drawText("Help", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Help", 48), 2), 24, 48, text_color);
+    raylib.drawText("Help", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Help", 50), 2), 24, 50, text_color);
 
     raylib.drawText(
         \\ Press Escape to go back
@@ -72,5 +72,5 @@ pub fn render(ctx: *Context) !void {
         \\   Left, Right  : move left, right
         \\   Up   : max bet
         \\   Down : min bet
-    , 20, 120, 24, text_color);
+    , 20, 120, 20, text_color);
 }
