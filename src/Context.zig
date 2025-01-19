@@ -235,17 +235,13 @@ pub fn refreshShop(ctx: *Context) void {
 const early_shop_items = [_]types.Coin{
     .{ .win = {} },
     .{ .win = {} },
-    .{ .win = {} },
-    .{ .win = {} },
 
-    .{ .additive_win = 1_75 },
+    .{ .additive_win = 1_00 },
+    .{ .additive_win = 1_25 },
+    .{ .additive_win = 1_25 },
+    .{ .additive_win = 1_50 },
     .{ .additive_win = 2_00 },
-    .{ .additive_win = 2_00 },
-    .{ .additive_win = 2_25 },
-    .{ .additive_win = 2_50 },
 
-    .{ .lesser_loss = 0.80 },
-    .{ .lesser_loss = 0.75 },
     .{ .lesser_loss = 0.75 },
     .{ .lesser_loss = 0.70 },
     .{ .lesser_loss = 0.60 },
@@ -254,8 +250,6 @@ const early_shop_items = [_]types.Coin{
     .{ .next_multiplier = 2 },
 };
 const mid_shop_items = [_]types.Coin{
-    .{ .win = {} },
-    .{ .win = {} },
     .{ .win = {} },
     .{ .better_win = 1.0 },
 

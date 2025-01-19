@@ -41,7 +41,7 @@ pub const Coin = union(enum) {
         return switch (self) { // TODO: add new effects here
             .win => try std.fmt.bufPrintZ(buffer, "Heads", .{}),
             .loss => try std.fmt.bufPrintZ(buffer, "Tails", .{}),
-            .additive_win => |val| try std.fmt.bufPrintZ(buffer, "+ ${d}.{d:02}", .{ val / 100, val % 100 }),
+            .additive_win => |val| try std.fmt.bufPrintZ(buffer, "Heads + ${d}.{d:02}", .{ val / 100, val % 100 }),
             .next_multiplier => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: x{d}", .{ 2 * duration_multiplier, val * value_multiplier }),
             .next_value_multiplier => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: effects x{d}", .{ 3 * duration_multiplier, val }),
             .next_duration_multiplier => |val| try std.fmt.bufPrintZ(buffer, "Next 2: duration x{d}", .{val * @as(u32, @intCast(value_multiplier))}),

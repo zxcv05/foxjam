@@ -135,6 +135,7 @@ pub fn update(ctx: *Context) !void {
                 defer ctx.money -= refresh_price;
                 ctx.refreshShop();
                 ctx.assets.play_sound("click1");
+                trophy.unlock_if(ctx, .kitsune, ctx.shop_refreshes > 10);
             } else ctx.assets.play_sound("click2");
         }
 
@@ -179,6 +180,8 @@ pub fn update(ctx: *Context) !void {
                     else => try ctx.coin_deck.negative_deck.append(ctx.allocator, ctx.shop_items[display_num].selling.coin),
                 }
                 ctx.shop_items[display_num] = .{ .sold = {} };
+                trophy.unlock_if(ctx, .robin, ctx.coin_deck.positive_deck.items.len >= 15);
+                trophy.unlock_if(ctx, .bat, ctx.coin_deck.negative_deck.items.len >= 15);
             }
         }
     }
@@ -202,7 +205,7 @@ pub fn update(ctx: *Context) !void {
         switch (ctx.last_coin) { // TODO: add new effects here
             .win             => ctx.money +|= bet_amount * ctx.effects.multiplier,
             .loss            => ctx.money -|= bet_amount,
-            .additive_win    => |val| ctx.money +|= val * ctx.effects.multiplier,
+            .additive_win    => |val| ctx.money +|= (val + bet_amount) * ctx.effects.multiplier,
             .next_multiplier => |val| try ctx.effects.addEffect(.{
                 .coin     = .{ .next_multiplier = val * ctx.effects.value_multiplier},
                 .duration = 2 * ctx.effects.duration_multiplier,
@@ -225,6 +228,8 @@ pub fn update(ctx: *Context) !void {
 
         trophy.unlock_if(ctx, .arctic, ctx.money == 0);
         trophy.unlock_if(ctx, .sand, ctx.money >= 50_000_00);
+        trophy.unlock_if(ctx, .@"8bit", ctx.coin_deck.flips >= 100);
+        trophy.unlock_if(ctx, .real, ctx.coin_deck.flips >= 500);
         ctx.effects.update(ctx.allocator);
     }
 
