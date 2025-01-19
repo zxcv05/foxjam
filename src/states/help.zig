@@ -55,6 +55,7 @@ pub fn render(ctx: *Context) !void {
         \\ Escape : Pause menu or "go back"
         \\ H : Show Help
         \\ I : Show Deck
+        \\ T : Show Trophies
         \\
         \\ # In game
         \\ Space : Flip coin

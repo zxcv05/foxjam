@@ -43,6 +43,36 @@ pub fn update(ctx: *Context) !void {
     if (raylib.isKeyPressed(.escape))
         try ctx.switch_driver(&State.states.PauseMenu);
 
+    const go_to_trophies =
+        raygui.guiButton(.{
+            .x = constants.SIZE_WIDTH - 12 - 32 - 6 - 32 - 6 - 32,
+            .width = 32,
+            .y = 12,
+            .height = 32,
+        }, "#157#") != 0;
+    if (go_to_trophies)
+        try ctx.switch_driver(&State.states.Trophies);
+
+    const view_stats =
+        raygui.guiButton(.{
+            .x = constants.SIZE_WIDTH - 12 - 32 - 6 - 32,
+            .width = 32,
+            .y = 12,
+            .height = 32,
+        }, "#191#") != 0;
+    if (view_stats)
+        try ctx.switch_driver(&State.states.Stats);
+
+    const view_help =
+        raygui.guiButton(.{
+            .x = constants.SIZE_WIDTH - 12 - 32,
+            .width = 32,
+            .y = 12,
+            .height = 32,
+        }, "#193#") != 0;
+    if (view_help)
+        try ctx.switch_driver(&State.states.Help);
+
     _ = raygui.guiSliderBar(.{
         .x = 12 + 96 + 12 + 96 + 12,
         .width = @floatFromInt(constants.SIZE_WIDTH - 2 * (12 + 96 + 12 + 96 + 12)),
