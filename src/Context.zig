@@ -153,7 +153,7 @@ pub fn refreshShop(ctx: *Context) void {
         ctx.money >= 1000_00,
     }) >= 2;
 
-    const base_price: f32 = @floatFromInt(ctx.shop_refreshes * 5);
+    const base_price: f32 = @floatFromInt(@as(u256, ctx.shop_refreshes) * 1_50);
 
     for (0..constants.max_shop_items) |i| {
         if (is_legendary and rng.float(f32) < 0.1) {
@@ -210,12 +210,11 @@ const mid_shop_items = [_]types.Coin{
     .{ .win = {} },
     .{ .better_win = 1.0 },
 
-    .{ .additive_win = 10_00 },
-    .{ .additive_win = 12_50 },
-    .{ .additive_win = 12_50 },
-    .{ .additive_win = 15_00 },
-    .{ .additive_win = 15_00 },
-    .{ .additive_win = 20_00 },
+    .{ .additive_win = 5_00 },
+    .{ .additive_win = 6_00 },
+    .{ .additive_win = 6_00 },
+    .{ .additive_win = 7_00 },
+    .{ .additive_win = 7_00 },
 
     .{ .next_multiplier = 2 },
     .{ .next_multiplier = 2 },
@@ -244,6 +243,10 @@ const end_shop_items = [_]types.Coin{
     .{ .better_win = 2.5 },
     .{ .better_win = 2.5 },
     .{ .better_win = 3.0 },
+
+    .{ .additive_win = 10_00 },
+    .{ .additive_win = 12_50 },
+    .{ .additive_win = 15_00 },
 
     .{ .next_multiplier = 6 },
     .{ .next_multiplier = 8 },

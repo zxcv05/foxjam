@@ -68,27 +68,76 @@ pub fn update(ctx: *Context) !void {
         ctx.money += rng.random().intRangeAtMost(u256, constants.work_money_min, constants.work_money_max);
 
         // TODO: Should this be click or coin?
+        // definitely coin, ure getting cash after all
         ctx.assets.play_sound("coin");
     }
 
-    const prev_text_size = raygui.guiGetStyle(.default, raygui.GuiDefaultProperty.text_size);
-    raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, 22);
-    const refreshing_shop =
-        raygui.guiButton(.{
-            .x = @floatFromInt(constants.SIZE_WIDTH - 12 - 96 - 12 - 96),
-            .width = 96 + 12 + 96,
-            .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64 - 12 - 64),
-            .height = 64,
-        }, "Refresh shop: $10.00") != 0 or raylib.isKeyPressed(.r);
+    { // shop stuff
+        const prev_text_size = raygui.guiGetStyle(.default, raygui.GuiDefaultProperty.text_size);
+        defer raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, prev_text_size);
 
-    if (refreshing_shop) {
-        if (ctx.money >= 10_00) {
-            defer ctx.money -= 10_00;
-            ctx.refreshShop();
-            ctx.assets.play_sound("click");
-        } else ctx.assets.play_sound("click_bad");
+        raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, 22);
+        const refreshing_shop =
+            raygui.guiButton(.{
+                .x = @floatFromInt(constants.SIZE_WIDTH - 12 - 96 - 12 - 96),
+                .width = 96 + 12 + 96,
+                .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64 - 12 - 64),
+                .height = 64,
+            }, "Refresh shop: $10.00") != 0 or raylib.isKeyPressed(.r);
+
+        if (refreshing_shop) {
+            if (ctx.money >= 10_00) {
+                defer ctx.money -= 10_00;
+                ctx.refreshShop();
+                ctx.assets.play_sound("click");
+            } else ctx.assets.play_sound("click_bad");
+        }
+
+        display_loop: for (0..constants.max_shop_items) |display_num| {
+            raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, prev_text_size);
+            var display_text_buffer: [256]u8 = undefined;
+            const display_text: [:0]const u8 = switch (ctx.shop_items[display_num]) {
+                .not_unlocked => "Not unlocked",
+                .sold         => "Sold",
+                .selling      => |val| blk: {
+                    const coin_text = val.coin.toString(&display_text_buffer, 1, 1) catch |err| switch (err) {
+                        std.fmt.BufPrintError.NoSpaceLeft => unreachable,
+                        else => return err,
+                    };
+                    raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, 16);
+                    display_text_buffer[coin_text.len] = '\n';
+                    const price_text = try std.fmt.bufPrintZ(display_text_buffer[(coin_text.len + 1)..], "Cost: ${d}.{d:02}", .{val.price / 100, val.price % 100});
+                    break :blk @ptrCast(display_text_buffer[0..(coin_text.len + 1 + price_text.len + 1)]);
+                },
+            };
+            const buying_item =
+                raygui.guiButton(.{
+                    .x = @floatFromInt(constants.SIZE_WIDTH - 12 - 96 - 12 - 96),
+                    .width = 96 + 12 + 96,
+                    .y = @floatFromInt(constants.SIZE_HEIGHT - (3 + (3 - display_num)) * (12 + 64)),
+                    .height = 64,
+                }, display_text) != 0;
+            if (buying_item) {
+                if (ctx.shop_items[display_num] == .not_unlocked or ctx.shop_items[display_num] == .sold) {
+                    ctx.assets.play_sound("click_bad");
+                    continue :display_loop;
+                }
+                // we know its selling
+                if (ctx.money < ctx.shop_items[display_num].selling.price) {
+                    ctx.assets.play_sound("click_bad");
+                    continue :display_loop;
+                }
+                ctx.assets.play_sound("coin");
+                ctx.money -= ctx.shop_items[display_num].selling.price;
+                switch (ctx.shop_items[display_num].selling.coin) {
+                    .win, .additive_win, .better_win, .next_duration_multiplier, .next_multiplier, .next_value_multiplier => try ctx.coin_deck.positive_deck.append(ctx.allocator, ctx.shop_items[display_num].selling.coin),
+                    .loss => unreachable, // we cannot buy a loss
+                    else => try ctx.coin_deck.negative_deck.append(ctx.allocator, ctx.shop_items[display_num].selling.coin),
+                }
+                ctx.shop_items[display_num] = .{ .sold = {} };
+            }
+        }
     }
-    raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, prev_text_size);
 
     const should_flip =
         raygui.guiButton(.{
@@ -142,16 +191,9 @@ pub fn update(ctx: *Context) !void {
 pub fn render(ctx: *Context) !void {
     var text_buffer: [256]u8 = undefined;
     { // draw results of last coin flip
-        const coin_text: [:0]const u8 = switch (ctx.last_coin) { // TODO: add new effects here
-            .win                      => "Heads",
-            .loss                     => "Tails",
-            .additive_win             => |val| std.fmt.bufPrintZ(&text_buffer, "+ ${d}.{d:02}", .{val / 100, val % 100}) catch unreachable,
-            .next_multiplier          => |val| std.fmt.bufPrintZ(&text_buffer, "Next {d}: x{d}", .{2 * ctx.effects.duration_multiplier, val * ctx.effects.value_multiplier}) catch unreachable,
-            .next_value_multiplier    => |val| std.fmt.bufPrintZ(&text_buffer, "Next {d}: effects x{d}", .{3 * ctx.effects.duration_multiplier, val}) catch unreachable,
-            .next_duration_multiplier => |val| std.fmt.bufPrintZ(&text_buffer, "Next 2: duration x{d}", .{val * @as(u32, @intCast(ctx.effects.value_multiplier))}) catch unreachable,
-            .lesser_loss              => |val| std.fmt.bufPrintZ(&text_buffer, "{d}% tails", .{@as(u8, @intFromFloat(val * 100.0))}) catch unreachable,
-            .weighted_coin            => |val| std.fmt.bufPrintZ(&text_buffer, "Next {d}: {d}% less negative", .{3 * ctx.effects.duration_multiplier, @as(u8, @intFromFloat(val * 100.0 * @as(f32, @floatFromInt(ctx.effects.value_multiplier))))}) catch unreachable,
-            .better_win               => |val| std.fmt.bufPrintZ(&text_buffer, "{d}% heads", .{100 + @as(u16, @intFromFloat(val * 100.0))}) catch unreachable,
+        const coin_text: [:0]const u8 = ctx.last_coin.toString(&text_buffer, ctx.effects.duration_multiplier, ctx.effects.value_multiplier) catch |err| switch (err) {
+            std.fmt.BufPrintError.NoSpaceLeft => unreachable,
+            else => return err,
         };
         const coin_text_width = raylib.measureText(coin_text.ptr, 32);
         std.debug.assert(coin_text_width >= 0);
@@ -203,33 +245,6 @@ pub fn render(ctx: *Context) !void {
         raylib.drawText(
             effect_text,
             2,
-            @intCast(2 + i * 14),
-            2,
-            raylib.Color.white
-        );
-    }
-    i = 0;
-    for (ctx.shop_items) |shop_item| {
-        defer i += 1;
-        const shop_item_text: [:0]const u8 = switch (shop_item) {
-            .selling => switch (shop_item.selling.coin) { // TODO: add new effects here
-                .win                      => "Heads",
-                .loss                     => unreachable,
-                .additive_win             => |val| std.fmt.bufPrintZ(&text_buffer, "+ ${d}.{d:02}", .{val / 100, val % 100}) catch unreachable,
-                .next_multiplier          => |val| std.fmt.bufPrintZ(&text_buffer, "Next {d}: x{d}", .{2 * ctx.effects.duration_multiplier, val * ctx.effects.value_multiplier}) catch unreachable,
-                .next_value_multiplier    => |val| std.fmt.bufPrintZ(&text_buffer, "Next {d}: effects x{d}", .{3 * ctx.effects.duration_multiplier, val}) catch unreachable,
-                .next_duration_multiplier => |val| std.fmt.bufPrintZ(&text_buffer, "Next 2: duration x{d}", .{val * @as(u32, @intCast(ctx.effects.value_multiplier))}) catch unreachable,
-                .lesser_loss              => |val| std.fmt.bufPrintZ(&text_buffer, "{d}% tails", .{@as(u8, @intFromFloat(val * 100.0))}) catch unreachable,
-                .weighted_coin            => |val| std.fmt.bufPrintZ(&text_buffer, "Next {d}: {d}% less negative", .{3 * ctx.effects.duration_multiplier, @as(u8, @intFromFloat(val * 100.0 * @as(f32, @floatFromInt(ctx.effects.value_multiplier))))}) catch unreachable,
-                .better_win               => |val| std.fmt.bufPrintZ(&text_buffer, "{d}% heads", .{100 + @as(u16, @intFromFloat(val * 100.0))}) catch unreachable,
-            },
-            .sold         => "Sold",
-            .not_unlocked => "Not unlocked",
-        };
-        const shop_item_text_width = raylib.measureText(shop_item_text.ptr, 2);
-        raylib.drawText(
-            shop_item_text,
-            constants.SIZE_WIDTH - 2 - shop_item_text_width,
             @intCast(2 + i * 14),
             2,
             raylib.Color.white
