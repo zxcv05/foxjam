@@ -113,6 +113,41 @@ pub fn deinit(this: *Context) void {
     this.coin_deck.deinit(this.allocator);
 }
 
+pub fn save(this: *Context) !void {
+    const config_dir_path = try std.fs.getAppDataDir(this.allocator, "foxjam");
+    defer this.allocator.free(config_dir_path);
+    std.fs.makeDirAbsolute(config_dir_path) catch {};
+
+    var config_dir = try std.fs.openDirAbsolute(config_dir_path, .{});
+    defer config_dir.close();
+
+    const file = try config_dir.createFile("ctx.sav", .{});
+    defer file.close();
+
+    try Serde.serialize(this.*, file.writer().any());
+}
+
+pub fn load(alloc: std.mem.Allocator) !Context {
+    const config_dir_path = try std.fs.getAppDataDir(alloc, "foxjam");
+    defer alloc.free(config_dir_path);
+    std.fs.makeDirAbsolute(config_dir_path) catch {};
+
+    var config_dir = try std.fs.openDirAbsolute(config_dir_path, .{});
+    defer config_dir.close();
+
+    return get_ctx: {
+        const file = config_dir.openFile("ctx.sav", .{ .mode = .read_only }) catch {
+            break :get_ctx try Context.init(alloc);
+        };
+        defer file.close();
+
+        break :get_ctx Serde.deserialize(Context, alloc, file.reader().any()) catch |e| {
+            std.log.err("failed loading ctx: {s}", .{@errorName(e)});
+            break :get_ctx try Context.init(alloc);
+        };
+    };
+}
+
 pub fn switch_driver(this: *Context, driver: *const State) !void {
     try this.driver.leave(this);
     try driver.enter(this);

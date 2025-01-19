@@ -78,6 +78,8 @@ fn init_emscripten(this: *Assets) !void {
         var files: [entry_count][]const u8 = undefined;
         var files_index: comptime_int = 0;
 
+        @setEvalBranchQuota(10_000);
+
         var start: comptime_int = 0;
         for (res_list[0..], 0..) |chr, index| {
             if (chr != '\n') continue;
