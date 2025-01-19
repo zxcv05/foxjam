@@ -50,7 +50,8 @@ pub fn serialize(this: *const Context, writer: std.io.AnyWriter) !void {
 
 pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context {
     const settings = try Settings.deserialize(alloc, reader);
-    const coin_deck = try types.CoinDeck.deserialize(alloc, reader);
+    var coin_deck = try types.CoinDeck.deserialize(alloc, reader);
+    errdefer coin_deck.deinit(alloc);
 
     var last_coins_bytes: [@sizeOf(types.Coin)]u8 = undefined;
     _ = try reader.readAll(last_coins_bytes[0..]);
@@ -62,7 +63,8 @@ pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context 
     _ = try reader.readAll(bet_percentage_bytes[0..]);
     const bet_percentage = std.mem.bytesToValue(f32, bet_percentage_bytes[0..]);
 
-    const effects = try types.EffectList.deserialize(alloc, reader);
+    var effects = try types.EffectList.deserialize(alloc, reader);
+    errdefer effects.deinit(alloc);
 
     const shop_refreshes = try reader.readInt(u16, .big);
     const shop_items_len = try reader.readInt(usize, .big);

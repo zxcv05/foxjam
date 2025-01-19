@@ -192,6 +192,7 @@ pub const CoinDeck = struct {
 
         const pos_deck_size = try reader.readInt(usize, .big);
         var pos_deck: Deck = try .initCapacity(alloc, pos_deck_size);
+        errdefer pos_deck.deinit(alloc);
         for (0..pos_deck_size) |_| {
             var buffer: [@sizeOf(Coin)]u8 = undefined;
             _ = try reader.readAll(buffer[0..]);
@@ -200,6 +201,7 @@ pub const CoinDeck = struct {
 
         const neg_deck_size = try reader.readInt(usize, .big);
         var neg_deck: Deck = try .initCapacity(alloc, neg_deck_size);
+        errdefer neg_deck.deinit(alloc);
         for (0..neg_deck_size) |_| {
             var buffer: [@sizeOf(Coin)]u8 = undefined;
             _ = try reader.readAll(buffer[0..]);
