@@ -18,6 +18,9 @@ pub const interface = State{
 
 var just_entered: bool = false;
 
+var pos_chance: f32 = 0.0;
+var neg_chance: f32 = 0.0;
+
 var num_pos: usize = 0;
 var num_neg: usize = 0;
 
@@ -42,6 +45,9 @@ pub fn enter(ctx: *Context) !void {
         num_neg += 1;
         neg_coins.getPtrAssertContains(coin).* += 1;
     }
+
+    pos_chance = ctx.positive_chance() * 100;
+    neg_chance = 100.0 - pos_chance;
 
     just_entered = true;
 }
@@ -68,7 +74,6 @@ pub fn update(ctx: *Context) !void {
 }
 
 pub fn render(ctx: *Context) !void {
-    _ = ctx;
     var buffer: [64]u8 = undefined;
 
     raylib.clearBackground(raylib.Color.black);
@@ -76,9 +81,12 @@ pub fn render(ctx: *Context) !void {
 
     raylib.drawText("Deck", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Deck", 48), 2), 24, 48, text_color);
 
+    const flips_text = std.fmt.bufPrintZ(buffer[0..], "Flips: {d}", .{ctx.coin_deck.flips}) catch unreachable;
+    raylib.drawText(flips_text, 15, 100, 24, text_color);
+
     const coins_y = 150;
 
-    const pos_coins_text = std.fmt.bufPrintZ(buffer[0..], "Positive coins: {d}", .{num_pos}) catch unreachable;
+    const pos_coins_text = std.fmt.bufPrintZ(buffer[0..], "Positive coins: {d} ({d:02.2}%)", .{ num_pos, pos_chance }) catch unreachable;
     raylib.drawText(pos_coins_text, 15, coins_y, 24, text_color);
 
     var pos_coin_index: i32 = 0;
@@ -93,7 +101,7 @@ pub fn render(ctx: *Context) !void {
     }
 
     const spacing: i32 = pos_coin_index * 20 + 50;
-    const neg_coins_text = std.fmt.bufPrintZ(buffer[0..], "Negative coins: {d}", .{num_neg}) catch unreachable;
+    const neg_coins_text = std.fmt.bufPrintZ(buffer[0..], "Negative coins: {d} ({d:02.2}%)", .{ num_neg, neg_chance }) catch unreachable;
     raylib.drawText(neg_coins_text, 15, spacing + coins_y, 24, text_color);
 
     var neg_coin_index: i32 = 0;

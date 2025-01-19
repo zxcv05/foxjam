@@ -55,24 +55,31 @@ pub fn update(ctx: *Context) !void {
             .width = 96 + 12 + 96,
             .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64 - 12 - 64),
             .height = 64,
-        }, "Go to work") != 0 or
-        raylib.isKeyPressed(.w);
+        }, "Go to work") != 0 or raylib.isKeyPressed(.w);
+
     if (going_to_work) {
         ctx.money += constants.work_money;
+
+        // TODO: Should this be click or coin?
+        ctx.assets.play_sound("coin");
     }
 
     const prev_text_size = raygui.guiGetStyle(.default, raygui.GuiDefaultProperty.text_size);
-    raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, 16);
+    raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, 22);
     const refreshing_shop =
         raygui.guiButton(.{
             .x = @floatFromInt(constants.SIZE_WIDTH - 12 - 96 - 12 - 96),
             .width = 96 + 12 + 96,
             .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64 - 12 - 64),
             .height = 64,
-        }, "Refresh shop: $10.00") != 0 or
-        raylib.isKeyPressed(.r);
+        }, "Refresh shop: $10.00") != 0 or raylib.isKeyPressed(.r);
+
     if (refreshing_shop) {
-        ctx.refreshShop();
+        if (ctx.money >= 10_00) {
+            defer ctx.money -= 10_00;
+            ctx.refreshShop();
+            ctx.assets.play_sound("click");
+        } else ctx.assets.play_sound("click_bad");
     }
     raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, prev_text_size);
 
@@ -82,8 +89,7 @@ pub fn update(ctx: *Context) !void {
             .width = @floatFromInt(constants.SIZE_WIDTH - 12 - 12),
             .y = @floatFromInt(constants.SIZE_HEIGHT - 12 - 64),
             .height = 64,
-        }, "Flip coin") != 0 or
-        raylib.isKeyPressed(.space);
+        }, "Flip coin") != 0 or raylib.isKeyPressed(.space);
 
     if (should_flip) {
         const bet_amount: @TypeOf(ctx.money) = @intFromFloat(@ceil(@as(f32, @floatFromInt(ctx.money)) * ctx.bet_percentage));
@@ -91,10 +97,7 @@ pub fn update(ctx: *Context) !void {
         coin_anim.frames_played = 0;
         show_coin = true;
 
-        ctx.last_coin = ctx.coin_deck.flip(
-            ctx.effects.coin_weight / 2.0 +
-            std.math.lerp(1.0, 0.5, std.math.clamp(@as(f32, @floatFromInt(ctx.coin_deck.flips)) / 8.0, 0.0, 1.0))
-        ); // rigged >:3
+        ctx.last_coin = ctx.coin_deck.flip();
 
         switch (ctx.last_coin) { // TODO: add new effects here
             .win             => ctx.money +|= bet_amount * ctx.effects.multiplier,

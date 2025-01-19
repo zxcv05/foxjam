@@ -1,5 +1,7 @@
 const std = @import("std");
 
+const Context = @import("Context.zig");
+
 /// the state of a flipped coin
 /// later one, there will also be stuff like
 /// - next coin multiplier
@@ -241,15 +243,19 @@ pub const CoinDeck = struct {
 
     /// get a random coin from deck
     /// positive chance is the chance to get one from the positive deck, otherwise you'll get a negative coin
-    pub fn flip(self: *CoinDeck, positive_chance: f32) Coin {
-        const rng = self.rng.random();
+    pub fn flip(self: *CoinDeck) Coin {
+        const ctx: *Context = @alignCast(@fieldParentPtr("coin_deck", self)); // hehe :3
+        const rand = self.rng.random();
 
         // get deck
-        const deck =
-            if (rng.float(f32) < positive_chance) self.positive_deck else self.negative_deck;
+        const positive = rand.float(f32) < ctx.positive_chance();
+        const deck = if (positive) self.positive_deck else self.negative_deck;
+
+        // todo: is this the right place for this?
+        if (positive) ctx.assets.play_sound("coin") else ctx.assets.play_sound("coin_bad");
 
         // get random coin from deck
-        const random_index = rng.uintLessThan(usize, deck.items.len);
+        const random_index = rand.uintLessThan(usize, deck.items.len);
         const coin = deck.items[random_index];
 
         self.flips += 1;
@@ -257,7 +263,7 @@ pub const CoinDeck = struct {
     }
 };
 
-pub const ShopItem = union (enum) {
+pub const ShopItem = union(enum) {
     not_unlocked: void,
     sold: void,
     selling: struct {

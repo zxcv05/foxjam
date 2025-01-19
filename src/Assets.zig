@@ -1,19 +1,17 @@
 const std = @import("std");
 const raylib = @import("raylib");
 
+const Context = @import("Context.zig");
 const constants = @import("constants.zig");
 
 const Assets = @This();
 
-// zxcv_pfp is a stub to show how this workflow works
-// it matches "zxcv_pfp.png" and will be a 2d texture
-// the type just needs to have an init fn that takes a [*:0]u8 file name
+coin: raylib.Sound = undefined,
+click: raylib.Sound = undefined,
+coin_bad: raylib.Sound = undefined,
+click_bad: raylib.Sound = undefined,
 
-// is this overly complex? yes
-// does it save me having to update three or four lines for every sprite i wanna add? also yes
-
-zxcv_pfp: raylib.Texture2D = undefined,
-click8a: raylib.Sound = undefined,
+burger: raylib.Texture2D = undefined,
 
 coin_01: raylib.Texture2D = undefined,
 coin_02: raylib.Texture2D = undefined,
@@ -102,4 +100,9 @@ pub fn deinit(this: Assets) void {
     inline for (fields) |field| {
         @field(this, field.name).unload();
     }
+}
+
+pub inline fn play_sound(assets: *Assets, comptime name: []const u8) void {
+    const ctx: *Context = @alignCast(@fieldParentPtr("assets", assets));
+    if (!ctx.settings.audio_muted) @field(assets, name).play();
 }

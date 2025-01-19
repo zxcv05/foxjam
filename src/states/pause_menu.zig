@@ -43,10 +43,16 @@ pub fn render(ctx: *Context) !void {
 
     if (raygui.guiButton(.{ .x = 10, .y = 10, .width = 100, .height = 50 }, "Reset") > 0) {
         const allocator = ctx.allocator;
+        const assets = ctx.assets;
 
         ctx.deinit();
         ctx.* = try .init(allocator);
+
+        ctx.assets = assets;
     }
+
+    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH - 45, .y = 10, .width = 35, .height = 35 }, if (ctx.settings.audio_muted) "#132#" else "#122#") > 0)
+        ctx.settings.audio_muted = !ctx.settings.audio_muted;
 
     if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 180 }, "Go back") > 0)
         try ctx.switch_driver(&State.states.Game);

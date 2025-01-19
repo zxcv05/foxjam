@@ -5,10 +5,11 @@
 const std = @import("std");
 
 const Assets = @import("Assets.zig");
-const State = @import("states/State.zig");
 const constants = @import("constants.zig");
-const types = @import("types.zig");
+const Settings = @import("Settings.zig");
+const State = @import("states/State.zig");
 const Serde = @import("serde.zig");
+const types = @import("types.zig");
 
 const Context = @This();
 
@@ -17,6 +18,7 @@ assets: Assets = .{},
 allocator: std.mem.Allocator,
 driver: *const State = &State.states.Game,
 
+settings: Settings = .{},
 coin_deck: types.CoinDeck = undefined,
 last_coin: types.Coin = .{ .win = {} },
 /// unit: cent / $0.01
@@ -28,6 +30,7 @@ shop_items: [constants.max_shop_items]types.ShopItem = undefined,
 shop_refreshes: u16 = 0,
 
 pub fn serialize(this: *const Context, writer: std.io.AnyWriter) !void {
+    try this.settings.serialize(writer);
     try this.coin_deck.serialize(writer);
     _ = try writer.writeAll(std.mem.asBytes(&this.last_coin));
     try writer.writeInt(@FieldType(Context, "money"), this.money, .big);
@@ -40,6 +43,7 @@ pub fn serialize(this: *const Context, writer: std.io.AnyWriter) !void {
 }
 
 pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context {
+    const settings = try Settings.deserialize(alloc, reader);
     const coin_deck = try types.CoinDeck.deserialize(alloc, reader);
 
     var last_coins_bytes: [@sizeOf(types.Coin)]u8 = undefined;
@@ -64,6 +68,7 @@ pub fn deserialize(alloc: std.mem.Allocator, reader: std.io.AnyReader) !Context 
 
     return .{
         .allocator = alloc,
+        .settings = settings,
         .coin_deck = coin_deck,
         .last_coin = last_coin,
         .money = money,
@@ -97,6 +102,19 @@ pub fn switch_driver(this: *Context, driver: *const State) !void {
     try driver.enter(this);
 
     this.driver = driver;
+}
+
+pub inline fn positive_chance(this: *Context) f32 {
+    return this.effects.coin_weight / 2.0 +
+        std.math.lerp(
+        1.0,
+        0.5,
+        std.math.clamp(
+            @as(f32, @floatFromInt(this.coin_deck.flips)) / 8.0,
+            0.0,
+            1.0,
+        ),
+    );
 }
 
 /// updates shop items

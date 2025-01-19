@@ -53,7 +53,7 @@ pub fn main() !void {
     try State.states.init(&ctx);
     defer State.states.deinit(&ctx);
 
-    defer _ = blk: {
+    defer blk: {
         const file = config_dir.createFile("ctx.sav", .{}) catch |e| {
             std.log.err("failed to open ctx.sav: {s}", .{@errorName(e)});
             break :blk;
@@ -61,7 +61,7 @@ pub fn main() !void {
 
         defer file.close();
         serde.serialize(ctx, file.writer().any()) catch |e| std.log.err("failed to save ctx: {s}", .{@errorName(e)});
-    };
+    }
 
     try ctx.driver.enter(&ctx);
 
