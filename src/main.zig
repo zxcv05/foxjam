@@ -41,6 +41,8 @@ pub fn main() !void {
 
     raygui.guiLoadStyle("res/style_dark.rgs");
     raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, 32);
+    raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_alignment_vertical, @intFromEnum(raygui.GuiTextAlignmentVertical.text_align_middle));
+    raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_wrap_mode, @intFromEnum(raygui.GuiTextWrapMode.text_wrap_word));
 
     raylib.initAudioDevice();
     defer raylib.closeAudioDevice();
