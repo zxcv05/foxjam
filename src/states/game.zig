@@ -307,7 +307,7 @@ pub fn render(ctx: *Context) !void {
         raylib.drawText(
             effect_text,
             12,
-            @intCast(12 + i * 20),
+            @intCast(12 + 50 + i * 20),
             20,
             raylib.Color.white
         );

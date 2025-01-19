@@ -53,7 +53,7 @@ pub fn update(ctx: *Context) !void {
 pub fn render(ctx: *Context) !void {
     const text_color = raylib.getColor(@bitCast(raygui.guiGetStyle(.default, raygui.GuiControlProperty.base_color_pressed)));
 
-    raylib.drawText("Trophies", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Trophies", 50), 2), 24, 50, text_color);
+    raylib.drawText("Foxes", constants.SIZE_WIDTH / 2 - @divTrunc(raylib.measureText("Foxes", 50), 2), 24, 50, text_color);
 
     // these are manually tweaked to perfection
     const pad_x = constants.fox_texture_width + 12;
