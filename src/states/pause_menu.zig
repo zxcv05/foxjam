@@ -51,7 +51,7 @@ pub fn render(ctx: *Context) !void {
         ctx.assets = assets;
     }
 
-    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH - 47, .y = 12, .width = 35, .height = 35 }, if (ctx.settings.audio_muted) "#132#" else "#122#") > 0)
+    if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH - 12 - 32, .y = 12, .width = 32, .height = 32 }, if (ctx.settings.audio_muted) "#132#" else "#122#") > 0)
         ctx.settings.audio_muted = !ctx.settings.audio_muted;
 
     if (raygui.guiButton(.{ .x = constants.SIZE_WIDTH / 2 - 80, .width = 160, .height = 50, .y = 240 }, "Go back") > 0)

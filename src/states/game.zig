@@ -40,12 +40,9 @@ pub fn leave(ctx: *Context) !void {
 }
 
 pub fn update(ctx: *Context) !void {
-    if (raylib.isKeyPressed(.escape))
-        try ctx.switch_driver(&State.states.PauseMenu);
-
     const go_to_trophies =
         raygui.guiButton(.{
-            .x = constants.SIZE_WIDTH - 12 - 32 - 6 - 32 - 6 - 32,
+            .x = constants.SIZE_WIDTH - 12 - 32 - 6 - 32 - 6 - 32 - 6 - 32,
             .width = 32,
             .y = 12,
             .height = 32,
@@ -55,7 +52,7 @@ pub fn update(ctx: *Context) !void {
 
     const view_stats =
         raygui.guiButton(.{
-            .x = constants.SIZE_WIDTH - 12 - 32 - 6 - 32,
+            .x = constants.SIZE_WIDTH - 12 - 32 - 6 - 32 - 6 - 32,
             .width = 32,
             .y = 12,
             .height = 32,
@@ -65,13 +62,23 @@ pub fn update(ctx: *Context) !void {
 
     const view_help =
         raygui.guiButton(.{
-            .x = constants.SIZE_WIDTH - 12 - 32,
+            .x = constants.SIZE_WIDTH - 12 - 32 - 6 - 32,
             .width = 32,
             .y = 12,
             .height = 32,
         }, "#193#") != 0;
     if (view_help)
         try ctx.switch_driver(&State.states.Help);
+
+    const go_to_pause_menu =
+        raygui.guiButton(.{
+            .x = constants.SIZE_WIDTH - 12 - 32,
+            .width = 32,
+            .y = 12,
+            .height = 32,
+        }, "#140#") != 0 or raylib.isKeyPressed(.escape);
+    if (go_to_pause_menu)
+        try ctx.switch_driver(&State.states.PauseMenu);
 
     _ = raygui.guiSliderBar(.{
         .x = 12 + 96 + 12 + 96 + 12,
