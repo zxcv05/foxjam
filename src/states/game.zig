@@ -120,11 +120,12 @@ pub fn update(ctx: *Context) !void {
         var text_buffer: [256]u8 = undefined;
 
         const refresh_price: u256 = 10_00 + @as(u256, ctx.shop_refreshes -| 1) * 5_00;
-        const refresh_text = std.fmt.bufPrintZ(&text_buffer, "Refresh shop: ${d}.{d:02}", .{refresh_price / 100, refresh_price % 100}) catch |err| switch (err) {
+        const refresh_text = std.fmt.bufPrintZ(&text_buffer, "Refresh shop:\n${d}.{d:02}", .{refresh_price / 100, refresh_price % 100}) catch |err| switch (err) {
             std.fmt.BufPrintError.NoSpaceLeft => unreachable,
             else => return err,
         };
-        raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, 22);
+
+        raygui.guiSetStyle(.default, raygui.GuiDefaultProperty.text_size, 20);
         const refreshing_shop =
             raygui.guiButton(.{
                 .x = @floatFromInt(constants.SIZE_WIDTH - 12 - 96 - 12 - 96),

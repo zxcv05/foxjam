@@ -52,11 +52,13 @@ pub fn render(ctx: *Context) !void {
     if (raygui.guiButton(.{ .x = 12, .y = 12, .width = 100, .height = 50 }, "Reset") > 0) {
         const allocator = ctx.allocator;
         const assets = ctx.assets;
+        const settings = ctx.settings;
 
         ctx.deinit();
         ctx.* = try .init(allocator);
 
         ctx.assets = assets;
+        ctx.settings = settings;
     }
 
     if (!just_entered and raygui.guiButton(.{ .x = constants.SIZE_WIDTH - 12 - 32, .y = 12, .width = 32, .height = 32 }, if (ctx.settings.audio_muted) "#132#" else "#122#") > 0)
