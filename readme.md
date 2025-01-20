@@ -1,5 +1,8 @@
-# foxjam (name subject to change)
-Submission for Mini Jam 176: Foxes
+# Foxy Flips
+> Flip coin, Win money, Get foxes
+
+Submission for [Mini Jam 176: Foxes](https://itch.io/jam/mini-jam-176-foxes)<br/>
+Can be found [here](https://ru04.itch.io/foxy-flips)
 
 ## Building
 - Built with zig 0.14.0-dev.2634+b36ea592b
