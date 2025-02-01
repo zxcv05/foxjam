@@ -38,8 +38,8 @@ pub fn update(ctx: *Context) !void {
     if (raylib.isKeyPressed(.escape))
         try ctx.switch_driver(&State.states.Game);
 
-    if (raylib.isKeyPressed(.one)) ctx.assets.play_sound("click1");
-    if (raylib.isKeyPressed(.two)) ctx.assets.play_sound("click2");
+    if (raylib.isKeyPressed(.one)) ctx.assets.play_sound("select1");
+    if (raylib.isKeyPressed(.two)) ctx.assets.play_sound("select2");
     if (raylib.isKeyPressed(.three)) ctx.assets.play_sound("coin1");
     if (raylib.isKeyPressed(.four)) ctx.assets.play_sound("coin2");
 }

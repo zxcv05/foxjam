@@ -131,5 +131,7 @@ pub fn unlock(ctx: *Context, comptime fox: Trophy.Tag) void {
     ctx.trophy_case.new_unlock = fox;
     ctx.trophy_case.new_unlock_ts = std.time.milliTimestamp() + constants.trophy_unlock_display_time;
 
+    ctx.assets.play_sound("achievement");
+
     ctx.save() catch |e| std.log.err("Error saving after trophy unlock: {s}", .{@errorName(e)});
 }

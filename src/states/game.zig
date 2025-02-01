@@ -108,7 +108,7 @@ pub fn update(ctx: *Context) !void {
 
     if (going_to_work) {
         ctx.money += rng.random().intRangeAtMost(u256, constants.work_money_min, constants.work_money_max);
-        ctx.assets.play_sound("coin1");
+        ctx.assets.play_sound("work");
         ctx.times_worked += 1;
         trophy.unlock_if(ctx, .black, ctx.times_worked >= 120);
     }
@@ -137,9 +137,9 @@ pub fn update(ctx: *Context) !void {
             if (ctx.money >= refresh_price) {
                 defer ctx.money -= refresh_price;
                 ctx.refreshShop();
-                ctx.assets.play_sound("click1");
+                ctx.assets.play_sound("select1");
                 trophy.unlock_if(ctx, .kitsune, ctx.shop_refreshes > 10);
-            } else ctx.assets.play_sound("click2");
+            } else ctx.assets.play_sound("select2");
         }
 
         display_loop: for (0..constants.max_shop_items) |display_num| {
@@ -167,17 +167,17 @@ pub fn update(ctx: *Context) !void {
                 }, display_text) != 0;
             if (buying_item) {
                 if (ctx.shop_items[display_num] == .not_unlocked or ctx.shop_items[display_num] == .sold) {
-                    ctx.assets.play_sound("click2");
+                    ctx.assets.play_sound("select2");
                     trophy.unlock_if(ctx, .umbryan, true);
                     continue :display_loop;
                 }
                 // we know its selling
                 if (ctx.money < ctx.shop_items[display_num].selling.price) {
-                    ctx.assets.play_sound("click2");
+                    ctx.assets.play_sound("select2");
                     trophy.unlock_if(ctx, .umbryan, true);
                     continue :display_loop;
                 }
-                ctx.assets.play_sound("click1");
+                ctx.assets.play_sound("select1");
                 ctx.money -= ctx.shop_items[display_num].selling.price;
                 switch (ctx.shop_items[display_num].selling.coin) {
                     .win, .additive_win, .better_win, .next_duration_multiplier, .next_multiplier, .next_value_multiplier => try ctx.coin_deck.positive_deck.append(ctx.allocator, ctx.shop_items[display_num].selling.coin),
