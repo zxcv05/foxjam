@@ -119,7 +119,10 @@ pub fn update(ctx: *Context) !void {
 
         var text_buffer: [256]u8 = undefined;
 
-        const refresh_price: u256 = 10_00 + @as(u256, ctx.shop_refreshes -| 1) * 5_00;
+        const shop_refreshes_u256 = @as(u256, ctx.shop_refreshes);
+        const refresh_price: u256 =
+            if (shop_refreshes_u256 <= 10) 10_00 + (shop_refreshes_u256 -| 1) * 5_00
+            else                           (shop_refreshes_u256 * shop_refreshes_u256 * 15 / 2 + 755 - shop_refreshes_u256 * 145) * 1_00;
         const refresh_text = std.fmt.bufPrintZ(&text_buffer, "Refresh shop:\n${d}.{d:02}", .{refresh_price / 100, refresh_price % 100}) catch |err| switch (err) {
             std.fmt.BufPrintError.NoSpaceLeft => unreachable,
             else => return err,
@@ -237,7 +240,7 @@ pub fn update(ctx: *Context) !void {
         trophy.unlock_if(ctx, .@"8bit", ctx.coin_deck.flips >= 100);
         trophy.unlock_if(ctx, .real, ctx.coin_deck.flips >= 500);
         trophy.unlock_if(ctx, .news, ctx.losses_in_a_row >= 4);
-        trophy.unlock_if(ctx, .dog, ctx.wins_in_a_row >= 7);
+        trophy.unlock_if(ctx, .dog, ctx.wins_in_a_row >= 7 and ctx.coin_deck.flips >= 10); // over ten so it isnt influenced by starting luck
         trophy.unlock_if(ctx, .fennec, ctx.effects.effects.len >= 4);
         ctx.effects.update(ctx.allocator);
 

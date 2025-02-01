@@ -20,6 +20,8 @@ pub const Coin = union(enum) {
     /// returns 100% of bet amount + value
     /// unit: cent / $0.01
     additive_win: u256,
+    /// same as win, except it returns 100% + value of bet amount
+    better_win: f32,
     /// next 2 flips will get a multiplier of value
     /// only if the result is positive tho, ofc
     next_multiplier: u256,
@@ -33,8 +35,6 @@ pub const Coin = union(enum) {
     lesser_loss: f32,
     /// next 3 flips, youre value ([0,1]) less likely to get a negative coin
     weighted_coin: f32,
-    /// same as win, except it returns 100% + value of bet amount
-    better_win: f32,
 
     // putting this here for less code duplication
     pub fn toString(self: Coin, buffer: []u8, duration_multiplier: u32, value_multiplier: u256) ![:0]const u8 {
