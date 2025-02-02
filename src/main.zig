@@ -62,13 +62,13 @@ pub fn main() !void {
             const width: f32 = @floatFromInt(raylib.measureText(text, 24));
             const bounds: raylib.Rectangle = .{
                 .x = 24,
-                .y = 60,
+                .y = constants.SIZE_HEIGHT - 65,
                 .width = width + 24,
                 .height = 40,
             };
 
-            raylib.drawRectangleRounded(bounds, 0.25, 4, raylib.Color.black);
-            raylib.drawText(text, @intFromFloat(bounds.x + 12), @intFromFloat(bounds.y + 8), 24, raylib.Color.white);
+            raylib.drawRectangleRounded(bounds, 0.25, 4, raylib.Color.white);
+            raylib.drawText(text, @intFromFloat(bounds.x + 12), @intFromFloat(bounds.y + 8), 24, raylib.Color.black);
 
             if (std.time.milliTimestamp() >= ctx.trophy_case.new_unlock_ts) ctx.trophy_case.new_unlock = null;
         }

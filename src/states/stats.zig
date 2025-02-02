@@ -120,7 +120,4 @@ pub fn render(ctx: *Context) !void {
         const text = std.fmt.bufPrintZ(buffer[0..], "- {s}: {d} ({d:.2}%)", .{ @tagName(coin.key), coin.value.*, chance }) catch unreachable;
         raylib.drawText(text, 25, spacing + coins_y + neg_coin_index * 20 + 30, 20, text_color);
     }
-
-    const highest_money_text = std.fmt.bufPrintZ(buffer[0..], "Highest money: ${d}.{d:02}", .{ ctx.money / 100, ctx.money % 100 }) catch unreachable;
-    raylib.drawText(highest_money_text, 25, spacing + coins_y + neg_coin_index * 20 + 50, 20, text_color);
 }

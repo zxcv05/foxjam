@@ -20,8 +20,6 @@ pub const Coin = union(enum) {
     /// returns 100% of bet amount + value
     /// unit: cent / $0.01
     additive_win: u256,
-    /// same as win, except it returns 100% + value of bet amount
-    better_win: f32,
     /// next 2 flips will get a multiplier of value
     /// only if the result is positive tho, ofc
     next_multiplier: u256,
@@ -31,8 +29,6 @@ pub const Coin = union(enum) {
     /// next 2 flips, when an effect is gotten, duration is multiplied by value
     /// doesnt apply to itself
     next_duration_multiplier: u32,
-    /// you lose only value ([0,1]) of money
-    lesser_loss: f32,
     /// next 3 flips, youre value ([0,1]) less likely to get a negative coin
     weighted_coin: f32,
 
@@ -45,9 +41,7 @@ pub const Coin = union(enum) {
             .next_multiplier => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: x{d}", .{ 2 * duration_multiplier, val * value_multiplier }),
             .next_value_multiplier => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: effects x{d}", .{ 3 * duration_multiplier, val }),
             .next_duration_multiplier => |val| try std.fmt.bufPrintZ(buffer, "Next 2: duration x{d}", .{val * @as(u32, @intCast(value_multiplier))}),
-            .lesser_loss => |val| try std.fmt.bufPrintZ(buffer, "{d}% tails", .{@as(u64, @intFromFloat(val * 100.0))}),
             .weighted_coin => |val| try std.fmt.bufPrintZ(buffer, "Next {d}: {d}% less negative", .{ 3 * duration_multiplier, @as(u64, @intFromFloat(val * 100.0 * @as(f32, @floatFromInt(value_multiplier)))) }),
-            .better_win => |val| try std.fmt.bufPrintZ(buffer, "{d}% heads", .{100 + @as(u64, @intFromFloat(val * 100.0))}),
         };
     }
 };

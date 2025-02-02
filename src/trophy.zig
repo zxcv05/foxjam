@@ -118,7 +118,7 @@ pub inline fn get_stand_description_for(fox: Trophy.Tag) [*:0]const u8 {
 }
 
 pub inline fn unlock_if(ctx: *Context, comptime fox: Trophy.Tag, cond: bool) void {
-    if (cond and !is_unlocked(ctx, fox)) unlock(ctx, fox);
+    if (cond) unlock(ctx, fox);
 }
 
 pub inline fn is_unlocked(ctx: *Context, comptime fox: Trophy.Tag) bool {
@@ -126,6 +126,8 @@ pub inline fn is_unlocked(ctx: *Context, comptime fox: Trophy.Tag) bool {
 }
 
 pub fn unlock(ctx: *Context, comptime fox: Trophy.Tag) void {
+    if (is_unlocked(ctx, fox)) return;
+
     ctx.trophy_case.displays.put(fox, true);
 
     ctx.trophy_case.new_unlock = fox;
