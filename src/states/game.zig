@@ -248,17 +248,20 @@ fn update_coin(ctx: *Context) !void {
         defer bet_amount.deinit();
 
         if (ctx.bet != .@"100%") {
-            var throw_away: std.math.big.int.Managed = try .initSet(alloc, 0);
+            var remainder: std.math.big.int.Managed = try .initSet(alloc, 0);
             var steps: std.math.big.int.Managed = try .initSet(alloc, 20);
             var step: std.math.big.int.Managed = try .initSet(alloc, ctx.bet.to_int());
 
             var limbs = try alloc.alloc(usize, std.math.big.int.calcDivLimbsBufferLen(ctx.money.len(), steps.len()));
 
             // bet_amount now contains money per step
-            try bet_amount.divTrunc(&throw_away, &ctx.money, &steps);
+            try bet_amount.divTrunc(&remainder, &ctx.money, &steps);
 
             limbs = try alloc.realloc(limbs, std.math.big.int.calcMulLimbsBufferLen(bet_amount.len(), 2, 0));
             try bet_amount.mul(&bet_amount, &step);
+
+            const rem = try remainder.to(u16) * ctx.bet.to_int();
+            try bet_amount.addScalar(&bet_amount, rem);
         }
 
         coin_anim.frames_played = 0;
@@ -309,6 +312,9 @@ fn update_coin(ctx: *Context) !void {
             }, ctx.allocator),
         }
 
+        if (!ctx.money.isPositive()) try ctx.money.set(0);
+        try ctx.update_money_string();
+
         trophy.unlock_if(ctx, .arctic, ctx.money.eqlZero());
         trophy.unlock_if(ctx, .sand, ctx.money.toConst().orderAgainstScalar(1_000_000_00) != .lt);
         trophy.unlock_if(ctx, .@"8bit", ctx.coin_deck.flips >= 100);
@@ -317,8 +323,6 @@ fn update_coin(ctx: *Context) !void {
         trophy.unlock_if(ctx, .dog, ctx.wins_in_a_row >= 7 and ctx.coin_deck.flips >= 10); // over ten so it isnt influenced by starting luck
         trophy.unlock_if(ctx, .fennec, ctx.effects.effects.len >= 4);
         ctx.effects.update(ctx.allocator);
-
-        try ctx.update_money_string();
 
         if (ctx.coin_deck.flips % 5 == 0) ctx.save() catch |e| std.log.err("Failed to auto save: {s}", .{@errorName(e)});
     }
